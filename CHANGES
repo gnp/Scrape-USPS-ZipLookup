@@ -1,3 +1,10 @@
+2.1 [2003-12-15]
+
+  * Fixed documentation's sample program
+
+  * Prevent a warning about a filehandle being used only once (when
+    in reality it isn't).
+
 
 2.0 [2003-12-13]
 

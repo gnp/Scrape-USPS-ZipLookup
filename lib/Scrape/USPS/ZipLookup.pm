@@ -13,7 +13,7 @@
 #
 # Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
-# [ $Revision: 1.7 $ ]
+# [ $Revision: 1.8 $ ]
 #
 
 package Scrape::USPS::ZipLookup;
@@ -21,12 +21,9 @@ package Scrape::USPS::ZipLookup;
 use strict;
 use warnings;
 
-our $VERSION = '2.0';
+our $VERSION = '2.1';
 
 use WWW::Mechanize;         # To communicate with USPS and get HTML
-#use XML::Driver::HTML;      # To generate SAX events from HTML
-#use XML::Handler::YAWriter; # To generate XML from SAX events
-#use XML::XPath;             # To extract information from XML
 
 use Scrape::USPS::ZipLookup::Address;
 
@@ -122,6 +119,8 @@ sub std_inner
   $agent->field(Selection => 1);
 
   { # TODO: Stupid hack because HTML::Form does a Carp::carp when we set this!
+    no strict;
+    no warnings;
     open SAVE_STDERR, ">&STDERR";
     close STDERR;
     $agent->field(address   => uc $addr->delivery_address);
@@ -307,48 +306,39 @@ __END__
 Scrape::USPS::ZipLookup - Standardize U.S. postal addresses.
 
 =head1 SYNOPSIS
-
-Use the old interface based on Data::Address::Standardize module:
-
-  use Scrape::USPS::ZipLookup;
-  my $zlu = Scrape::USPS::ZipLookup->new();
-  ($street, $city, $state, $zip) = $zlu->std_addr($street, $city, $state, $zip);
-
-or,
-
-  use Scrape::USPS::ZipLookup;
-  my $zlu = Scrape::USPS::ZipLookup->new();
-  # Read in a pipe-delimited data set like a filter.
-  while(<>) {
-      chomp;
-      my @addr = split('\|');
-      push @addr_list, [ @addr ];
-  }
-  my @std_list = $zlu->std_addrs(@addr_list);
-  # Write a pipe-delimited data set to standard output.
-  foreach (@std_list) {
-      print join('|', @$_), "\n";
-  }
-
-Or, use the new interface:
-
+  
+  #!/usr/bin/perl
+  
   use Scrape::USPS::ZipLookup::Address;
   use Scrape::USPS::ZipLookup;
-
+  
   my $addr = Scrape::USPS::ZipLookup::Address->new(
-    'Firm'             => 'Focus Research, Inc.',
-    'Urbanization'     => '',
-    'Delivery Address' => '8080 Beckett Center Drive Suite 203',
-    'City'             => 'West Chester',
-    'State'            => 'OH',
-    'ZIP Code'         => '45069-5001'
+    'Focus Research, Inc.',                # Firm
+    '',                                    # Urbanization
+    '8080 Beckett Center Drive Suite 203', # Delivery Address
+    'West Chester',                        # City
+    'OH',                                  # State
+    '45069-5001'                           # ZIP Code
   );
-
+  
   my $zlu = Scrape::USPS::ZipLookup->new();
-
+  
   my @matches = $zlu->std_addr($addr);
-
-  die "No matches!" unless @matches;
+  
+  if (@matches) {
+    printf "\n%d matches:\n", scalar(@matches);
+    foreach my $match (@matches) {
+      print "-" x 39, "\n";
+      print $match->to_string;
+      print "\n";
+    }
+    print "-" x 39, "\n";
+  }
+  else {
+    print "No matches!\n";
+  }
+  
+  exit 0;
 
 
 =head1 DESCRIPTION

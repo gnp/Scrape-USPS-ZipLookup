@@ -2,47 +2,38 @@ NAME
     Scrape::USPS::ZipLookup - Standardize U.S. postal addresses.
 
 SYNOPSIS
-    Use the old interface based on Data::Address::Standardize module:
-
-      use Scrape::USPS::ZipLookup;
-      my $zlu = Scrape::USPS::ZipLookup->new();
-      ($street, $city, $state, $zip) = $zlu->std_addr($street, $city, $state, $zip);
-
-    or,
-
-      use Scrape::USPS::ZipLookup;
-      my $zlu = Scrape::USPS::ZipLookup->new();
-      # Read in a pipe-delimited data set like a filter.
-      while(<>) {
-          chomp;
-          my @addr = split('\|');
-          push @addr_list, [ @addr ];
-      }
-      my @std_list = $zlu->std_addrs(@addr_list);
-      # Write a pipe-delimited data set to standard output.
-      foreach (@std_list) {
-          print join('|', @$_), "\n";
-      }
-
-    Or, use the new interface:
-
+      #!/usr/bin/perl
+  
       use Scrape::USPS::ZipLookup::Address;
       use Scrape::USPS::ZipLookup;
-
+  
       my $addr = Scrape::USPS::ZipLookup::Address->new(
-        'Firm'             => 'Focus Research, Inc.',
-        'Urbanization'     => '',
-        'Delivery Address' => '8080 Beckett Center Drive Suite 203',
-        'City'             => 'West Chester',
-        'State'            => 'OH',
-        'ZIP Code'         => '45069-5001'
+        'Focus Research, Inc.',                # Firm
+        '',                                    # Urbanization
+        '8080 Beckett Center Drive Suite 203', # Delivery Address
+        'West Chester',                        # City
+        'OH',                                  # State
+        '45069-5001'                           # ZIP Code
       );
-
+  
       my $zlu = Scrape::USPS::ZipLookup->new();
-
+  
       my @matches = $zlu->std_addr($addr);
-
-      die "No matches!" unless @matches;
+  
+      if (@matches) {
+        printf "\n%d matches:\n", scalar(@matches);
+        foreach my $match (@matches) {
+          print "-" x 39, "\n";
+          print $match->to_string;
+          print "\n";
+        }
+        print "-" x 39, "\n";
+      }
+      else {
+        print "No matches!\n";
+      }
+  
+      exit 0;
 
 DESCRIPTION
     The United States Postal Service (USPS) has on its web site an HTML form
