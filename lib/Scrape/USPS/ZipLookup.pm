@@ -21,13 +21,13 @@ package Scrape::USPS::ZipLookup;
 use strict;
 use warnings;
 
-our $VERSION = '2.2';
+our $VERSION = '2.3';
 
 use WWW::Mechanize;         # To communicate with USPS and get HTML
 
 use Scrape::USPS::ZipLookup::Address;
 
-my $start_url = 'http://zip4.usps.com/zip4/welcome.htm';
+my $start_url = 'http://zip4.usps.com/zip4/welcome.jsp';
 my $form_id   = 'frmzip';
 
 
@@ -136,6 +136,7 @@ sub std_inner
     open SAVE_STDERR, ">&STDERR";
     close STDERR;
     $agent->field(address   => uc $addr->delivery_address);
+    $agent->field(address1  => uc $addr->delivery_address);
     open STDERR, ">&SAVE_STDERR";
   }
 
@@ -227,7 +228,7 @@ sub std_inner
     my $delivery       = $raw_match->{DELIVERYPOINT};
     my $check          = $raw_match->{CHECKDIGIT};
 
-    next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d\d\d\d\d-\d\d\d\d)$/);
+    next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d{5}(-\d{4})?)/);
     my ($city, $state, $zip) = ($1, $2, $3);
 
     #
