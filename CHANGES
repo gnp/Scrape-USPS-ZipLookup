@@ -1,15 +1,5 @@
 
-1.1 [2002-04-29]
-
-  * Fixed a documentation bug in Scrape::USPS::ZipLookup regarding
-    how to call verbose().
-
-  * Fixed Scrape::USPS::ZipLookup::Address' logic to use isa().
-
-  * Fixed one of the standardize.t tests.
-
-
-1.0
+1.000
 
   * Renamed to Scrape::USPS::ZipLookup from Data::Address::Standardize.
     (based on version 0.003 of Data::Address::Standardize).
