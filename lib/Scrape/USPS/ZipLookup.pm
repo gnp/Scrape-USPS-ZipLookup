@@ -168,6 +168,10 @@ sub std_inner
   #
   # Time to Parse:
   #
+  # The results look like this:
+  #
+  #   <td width="312" background="images/light_blue_bg2.gif" class="mainText">6216 EDDINGTON ST <br>LIBERTY TOWNSHIP&nbsp;OH&nbsp;45044-9761 <br>
+  #
   # 1. We find <td header ...> ... </td> to find the data fields.
   # 2. We strip out <font> and <a>
   # 3. We replace &nbsp; with space
@@ -186,66 +190,61 @@ sub std_inner
   #   CHECKDIGIT: 3
   #
 
-  my @cells = map { trim($_) } $content =~ m{<td header.*?>(.*?)</td>}gs;
-
-  return () unless @cells >= 6;
-
-#  print STDERR "This many cells: ", scalar(@cells), "...\n";
-
-  my %fields = ();
-
-  foreach my $cell (@cells) {
-    $cell =~ s{</?font.*?>}{}g;
-    $cell =~ s{</?a.*?>}{}g;
-    $cell =~ s{&nbsp;}{ }g;
-    $cell =~ s{^.*?:\s*}{}g;
-    $cell =~ s{<!--<(.*?)/>-->}{};
-
-    my $field = uc $1;
-    my $value = $cell;
-
-    $field =~ s/[^A-Z]//g;
-
-    $value =~ s/^\s+//;
-    $value =~ s/\s+$//;
-    $value =~ s/\s+/ /g;
-
-#    printf "%s: %s\n\n", $field, $cell;
-
-    last if exists $fields{$field}; # We only allow one match for now.
-
-    $fields{$field} = $value;
-  }
-
-  my @raw_matches = ( { %fields } );
   my @matches;
 
-  foreach my $raw_match (@raw_matches) {
-    my $address        = $raw_match->{ADDRESSLINE};
-    my $city_state_zip = $raw_match->{CITYSTATEZIP};
-    my $route          = $raw_match->{CARRIERROUTE};
-    my $county         = $raw_match->{COUNTY};
-    my $delivery       = $raw_match->{DELIVERYPOINT};
-    my $check          = $raw_match->{CHECKDIGIT};
+  my @raw_matches = map { trim($_) } $content =~ m{<td\s+[^>]*background=['"]images/light_blue_bg2.gif['"][^>]*class="mainText"[^>]*>(.*?)</td>}gsi;
 
+  foreach my $raw_match (@raw_matches) {
+    my $carrier_route  = undef;
+    my $county         = undef;
+    my $delivery_point = undef;
+    my $check_digit    = undef;
+
+#    if ($cell =~ m/mail_info_pop2.jsp\?carrier=(\w*)&county=(\w*)&dpoint=(\w*)&cdigit=(\w*)&lac=&elot=0176&elotind=A&rectype=S&pmbdes=&pmbnum=&dflag=&ews="
+
+    if ($raw_match =~ m/mail_info_pop2.jsp\?carrier=(\w*)&county=(\w*)&dpoint=(\w*)&cdigit=(\w*)/i) {
+      $carrier_route  = $1;
+      $county         = $2;
+      $delivery_point = $3;
+      $check_digit    = $4;
+    }
+
+    $raw_match =~ s{</?font.*?>}{}g;
+    $raw_match =~ s{</?span.*?>}{}g;
+    $raw_match =~ s{</?a.*?>}{}g;
+    $raw_match =~ s{&nbsp;}{ }g;
+    $raw_match =~ s{^.*?:\s*}{}g;
+    $raw_match =~ s{<!--<(.*?)/>-->}{}g;
+
+    my ($address, $city_state_zip) = split( /\s*<br\s*\/?>\s*/, $raw_match);
+
+    next unless $city_state_zip;
     next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d{5}(-\d{4})?)/);
+
     my ($city, $state, $zip) = ($1, $2, $3);
 
-    #
-    # Create an Address object to represent the above, and remember it:
-    #
+#    print("-" x 70, "\n");
+#    print "Address:        $address\n";
+#    print "City:           $city\n";
+#    print "State:          $state\n";
+#    print "Zip:            $zip\n";
+#    print "Carrier Route:  $carrier_route\n";
+#    print "County:         $county\n";
+#    print "Delivery Point: $delivery_point\n";
+#    print "Check Digit:    $check_digit\n";
+#    print "\n";
 
     my $match = Scrape::USPS::ZipLookup::Address->new($address, $city, $state, $zip);
 
-    $match->carrier_route($route);
+    $match->carrier_route($carrier_route);
     $match->county($county);
-    $match->delivery_point($delivery);
-    $match->check_digit($check);
+    $match->delivery_point($delivery_point);
+    $match->check_digit($check_digit);
 
     push @matches, $match;
   }
 
-  print '\\', '_' x 77, '/',  "\n" if $self->verbose;
+  print('\\', '_' x 77, '/', "\n") if $self->verbose;
 
   return @matches;
 }
