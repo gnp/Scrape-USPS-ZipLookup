@@ -1,3 +1,23 @@
+2.2 [2004-07-02]
+
+  * Updated start URL for first page fetch to match new operation of
+    USPS site.
+
+  * Updated the form ID used to refer to the form, since the site has
+    been changed to use a named form
+
+  * Now under verbose output, you get to the the result of fetching
+    the start URL.
+
+  * Copyright date updates.
+
+  * NOTE: It appears that the service is *significantly slower than
+    it used to be. This may be on purpose to dissuade you from using
+    the service inappropriately. Consider this a reminder that you
+    should not be using this module for purposes not allowed by the
+    USPS usage policy posted on their site.
+
+
 2.1 [2003-12-15]
 
   * Fixed documentation's sample program
