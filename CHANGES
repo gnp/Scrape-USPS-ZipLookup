@@ -1,11 +1,14 @@
 
-2.0 [2003-01-28]
+2.0 [2003-12-13]
+
+  * Works with recently changed USPS web site.
 
   * Uses WWW::Mechanize to interact with the USPS web application.
 
-  * Uses XML::Driver::HTML to convert resulting HTML into XML.
+  * New script/stdaddr program to demonstrate usage.
 
-  * Uses XML::XPath to extract the resulting address matches.
+  * New test.html HTML file to show minimal interaction with the USPS
+    application.
 
 
 1.1 [2002-07-13]
