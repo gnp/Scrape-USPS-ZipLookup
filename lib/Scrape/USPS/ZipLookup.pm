@@ -4,15 +4,16 @@
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
 #
-#     http://www.usps.com/ncsc/lookups/lookup_zip+4.html
+#     http://www.usps.com/zip4/
 #
-# BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
-# DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
-#
+# BE SURE TO READ, UNDERSTAND, AND ABIDE BY THE TERMS OF USE FOR THE
+# USPS WEB SITE. LINKS ARE PROVIDED IN THE TERMS OF USE SECTION IN THE
+# DOCUMENTATION OF THIS PROGRAM, WHICH MAY BE FOUND AT THE END OF THIS
+# SOURCE CODE FILE.
 #
 # Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
-# [ $Revision: 1.6 $ ]
+# [ $Revision: 1.7 $ ]
 #
 
 package Scrape::USPS::ZipLookup;
@@ -23,9 +24,9 @@ use warnings;
 our $VERSION = '2.0';
 
 use WWW::Mechanize;         # To communicate with USPS and get HTML
-use XML::Driver::HTML;      # To generate SAX events from HTML
-use XML::Handler::YAWriter; # To generate XML from SAX events
-use XML::XPath;             # To extract information from XML
+#use XML::Driver::HTML;      # To generate SAX events from HTML
+#use XML::Handler::YAWriter; # To generate XML from SAX events
+#use XML::XPath;             # To extract information from XML
 
 use Scrape::USPS::ZipLookup::Address;
 
@@ -40,7 +41,7 @@ sub new
 {
   my $class = shift;
   my $self = bless {
-    USER_AGENT => WWW::Mechanize->new,
+    USER_AGENT => WWW::Mechanize->new(agent => ''),
     VERBOSE    => 0,
   }, $class;
 
@@ -106,7 +107,7 @@ sub std_inner
   #
   # Unless we are in verbose mode, we make the WWW::Mechanize user agent be
   # quiet. At the time this was written [2003-01-28], it generates a warning
-  # about the "address" form field being read-only if its not it quiet mode.
+  # about the "address" form field being read-only if its not in quiet mode.
   #
   # We set the form's Selection field to "1" to indicate that we are doing
   # regular zip code lookup.
@@ -119,124 +120,104 @@ sub std_inner
   $agent->form(1); # The first form on the page is the one we'll fill out.
 
   $agent->field(Selection => 1);
-  $agent->field(address   => uc $addr->delivery_address);
+
+  { # TODO: Stupid hack because HTML::Form does a Carp::carp when we set this!
+    open SAVE_STDERR, ">&STDERR";
+    close STDERR;
+    $agent->field(address   => uc $addr->delivery_address);
+    open STDERR, ">&SAVE_STDERR";
+  }
+
   $agent->field(city      => uc $addr->city);
   $agent->field(state     => uc $addr->state);
   $agent->field(zipcode   => uc $addr->zip_code);
 
   my $response = $agent->click; # An HTTP::Response instance
 
-  if ($self->verbose) {
-    print "-" x 79, "\n";
-    print "HTTP Request:\n";
-    print $agent->req->as_string;
-  }
+#
+# NOTE 2003-12-12: Can't do anymore. req() method is gone in 0.7 WWW::Mechanize!
+#  if ($self->verbose) {
+#    print "-" x 79, "\n";
+#    print "HTTP Request:\n";
+#    print $agent->req->as_string;
+#  }
+#
 
   die "Error communicating with server" unless $response;
 
   my $content = $agent->{content};
 
-#  if ($self->verbose) {
-#    print "-" x 79, "\n";
-#    print "HTTP Response:\n";
-#    print $response->as_string;
-#  }
-
-  #
-  # Convert the HTML result into XML:
-  #
-  # We use the Encoding "ISO-8859-1" because we were getting strange character
-  # problems when we didn't specify it, or used "UTF-8".
-  #
-
-  my $ya = new XML::Handler::YAWriter( 
-    AsString => 1,
-    Pretty   => {
-      NoWhiteSpace       => 1,
-      NoComments         => 1,
-      PrettyWhiteIndent  => 1,
-      PrettyWhiteNewline => 1,
-    },
-  );
-
-  my $html = new XML::Driver::HTML(
-    Handler => $ya,
-    Source  => {
-      String             => $content,
-      Encoding           => 'ISO-8859-1',
-    }
-  );
-    
-  my $in_xml = $html->parse();
-
   if ($self->verbose) {
     print "-" x 79, "\n";
-    print "Response as XML:\n";
-    print $in_xml;
+    print "HTTP Response:\n";
+    print $response->as_string;
   }
 
   #
-  # Use XPath to extract the result addresses:
+  # Time to Parse:
   #
-  # Of course, this is the fragile part of the code. These XPath expressions
-  # work great right now (2003-01-28), but there is no guarantee they will
-  # continue to work well going forward, but that is the cost (risk) of
-  # scraping a service not under our control.
+  # 1. We find <td header ...> ... </td> to find the data fields.
+  # 2. We strip out <font> and <a>
+  # 3. We replace &nbsp; with space
+  # 4. We strip out leading "...: "
+  # 5. We find <!--< ... />--> to get the field id
+  # 6. We standardize the field id (upper case, alpha only)
+  # 7. We standardize the value (trimming and whitespace coalescing)
   #
-  # We'd rather pass in the XML::Driver::HTML instance. Above we convert an
-  # HTML string to an XML string by parsing and re-rendering. Now, we are
-  # going to parse the XML string again.
+  # We end up with something like this:
+  #
+  #   ADDRESSLINE:  6216 EDDINGTON ST
+  #   CITYSTATEZIP: LIBERTY TOWNSHIP OH  45044-9761
+  #   CARRIERROUTE: R007
+  #   COUNTY: BUTLER
+  #   DELIVERYPOINT: 16
+  #   CHECKDIGIT: 3
   #
 
+  my @cells = map { trim($_) } $content =~ m{<td header.*?>(.*?)</td>}gs;
+
+  return () unless @cells >= 6;
+
+#  print STDERR "This many cells: ", scalar(@cells), "...\n";
+
+  my %fields = ();
+
+  foreach my $cell (@cells) {
+    $cell =~ s{</?font.*?>}{}g;
+    $cell =~ s{</?a.*?>}{}g;
+    $cell =~ s{&nbsp;}{ }g;
+    $cell =~ s{^.*?:\s*}{}g;
+    $cell =~ s{<!--<(.*?)/>-->}{};
+
+    my $field = uc $1;
+    my $value = $cell;
+
+    $field =~ s/[^A-Z]//g;
+
+    $value =~ s/^\s+//;
+    $value =~ s/\s+$//;
+    $value =~ s/\s+/ /g;
+
+#    printf "%s: %s\n\n", $field, $cell;
+
+    last if exists $fields{$field}; # We only allow one match for now.
+
+    $fields{$field} = $value;
+  }
+
+  my @raw_matches = ( { %fields } );
   my @matches;
 
-  my $xp = XML::XPath->new(xml => $in_xml);
-
-  my $main_path = "/html/body/table[2]/tr[3]/td[3]/table[2]/tr[1]/td[1]/table[2]/tr";
-  my $nodeset   = $xp->find($main_path); # Find all addresses
-
-  foreach my $node ($nodeset->get_nodelist) {
-#    my @foo_nodes      = $xp->findnodes('td[1]/table[1]/tr[1]', $node);
-    my @addr_nodes     = $xp->findnodes('td[1]/table[1]/tr[2]', $node);
-    my @city_nodes     = $xp->findnodes('td[1]/table[1]/tr[3]', $node);
-
-    my @route_nodes    = $xp->findnodes('td[2]/table[1]/tr[1]', $node);
-    my @county_nodes   = $xp->findnodes('td[2]/table[1]/tr[2]', $node);
-    my @delivery_nodes = $xp->findnodes('td[2]/table[1]/tr[3]', $node);
-    my @check_nodes    = $xp->findnodes('td[2]/table[1]/tr[4]', $node);
-#    my @bar_nodes      = $xp->findnodes('td[2]/table[1]/tr[5]', $node);
-
-    #
-    # Check and parse the address result:
-    #
-
-    next unless @addr_nodes;
-    next unless @city_nodes;
-
-    my $address        = trim($addr_nodes[0]->string_value);
-    my $city_state_zip = trim($city_nodes[0]->string_value);
+  foreach my $raw_match (@raw_matches) {
+    my $address        = $raw_match->{ADDRESSLINE};
+    my $city_state_zip = $raw_match->{CITYSTATEZIP};
+    my $route          = $raw_match->{CARRIERROUTE};
+    my $county         = $raw_match->{COUNTY};
+    my $delivery       = $raw_match->{DELIVERYPOINT};
+    my $check          = $raw_match->{CHECKDIGIT};
 
     next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d\d\d\d\d-\d\d\d\d)$/);
     my ($city, $state, $zip) = ($1, $2, $3);
-
-    #
-    # Check and parse the additional information:
-    #
-
-    next unless @route_nodes;
-    next unless @county_nodes;
-    next unless @delivery_nodes;
-    next unless @check_nodes;
-
-    my $route    = trim($route_nodes[0]->string_value);
-    my $county   = trim($county_nodes[0]->string_value);
-    my $delivery = trim($delivery_nodes[0]->string_value);
-    my $check    = trim($check_nodes[0]->string_value);
-
-    $route    =~ s/^.*: ?//; # Remove any leading field name
-    $county   =~ s/^.*: ?//; # Remove any leading field name
-    $delivery =~ s/^.*: ?//; # Remove any leading field name
-    $check    =~ s/^.*: ?//; # Remove any leading field name
 
     #
     # Create an Address object to represent the above, and remember it:
@@ -373,7 +354,7 @@ Or, use the new interface:
 =head1 DESCRIPTION
 
 The United States Postal Service (USPS) has on its web site an HTML form at
-C<http://www.usps.com/ncsc/lookups/lookup_zip+4.html>
+C<http://www.usps.com/zip4/>
 for standardizing an address. Given a firm, urbanization, street address,
 city, state, and zip, it will put the address into standard form (provided
 the address is in their database) and display a page with the resulting
@@ -398,7 +379,8 @@ To see debugging output, call C<< $zlu->verbose(1) >>.
 =head1 TERMS OF USE
 
 BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE
-PAGE AT C<http://www.usps.com/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
+PAGE (AT C<http://www.usps.com/homearea/docs/termsofuse.htm> AT THE TIME
+THIS TEXT WAS WRITTEN). IN PARTICULAR, NOTE THAT THEY
 DO NOT PERMIT THE USE OF THEIR WEB SITE'S FUNCTIONALITY FOR COMMERCIAL
 PURPOSES. DO NOT USE THIS CODE IN A WAY THAT VIOLATES THE TERMS OF USE.
 

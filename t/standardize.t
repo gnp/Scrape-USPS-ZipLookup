@@ -5,7 +5,7 @@
 #
 # Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
-# [ $Revision: 1.4 $ ]
+# [ $Revision: 1.5 $ ]
 #
 
 use strict;
@@ -58,7 +58,7 @@ print "not " if $@ or not $zlu;
 print "ok 2 # Allocating a Scrape::USPS::ZipLookup instance\n";
 die "Bailing out..." if $@ or not $zlu;
 
-$zlu->verbose(0);
+#$zlu->verbose(1);
 
 my $i = 2;
 my $failed = 0;
