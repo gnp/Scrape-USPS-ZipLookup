@@ -1,0 +1,6 @@
+
+1.000
+
+  * Renamed to Scrape::USPS::ZipLookup from Data::Address::Standardize.
+    (based on version 0.003 of Data::Address::Standardize).
+
