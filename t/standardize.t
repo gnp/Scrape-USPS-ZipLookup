@@ -2,19 +2,14 @@
 #
 # standardize.t - Test script.
 #
-# [ $Revision: 1.3 $ ]
 #
-# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
-# This program is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+# Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
+# This program is free software. It is subject to the same license as Perl.
+# [ $Revision: 1.4 $ ]
 #
 
 use strict;
-use Scrape::USPS::ZipLookup;
 
-my $zlu = Scrape::USPS::ZipLookup->new();
-
-$zlu->verbose(1);
 
 #
 # Read in the tries:
@@ -50,11 +45,23 @@ if (scalar(@tries) % 2) {
 # Perform the test cases:
 #
 
-printf "1..%d\n", int(scalar(@tries) / 2);
+printf "1..%d\n", 2 + (int(scalar(@tries) / 2));
 
-my $i;
+eval "use Scrape::USPS::ZipLookup;";
+print "not " if $@;
+print "ok 1 # Importing Scrape::USPS::ZipLookup module\n";
+die "Bailing out..." if $@;
+
+my $zlu;
+eval { $zlu = Scrape::USPS::ZipLookup->new(); };
+print "not " if $@ or not $zlu;
+print "ok 2 # Allocating a Scrape::USPS::ZipLookup instance\n";
+die "Bailing out..." if $@ or not $zlu;
+
+$zlu->verbose(0);
+
+my $i = 2;
 my $failed = 0;
-
 
 while (@tries) {
   my @in  = @{shift(@tries)};
@@ -70,7 +77,17 @@ while (@tries) {
       $failed++;
     }
   } else {
-    if (join("\n", @out) ne join("\n", @result)) {
+    if (@result) {
+      my $expected = join("\n", @out);
+      my $received = $result[0]->to_string;
+      if ($expected ne $received) {
+        print "  EXPECTED: $expected\n";
+        print "  RECEIVED: $received\n";
+        print 'not ';
+        $failed++;
+      }
+    }
+    else {
       print 'not ';
       $failed++;
     }
@@ -90,9 +107,9 @@ __DATA__
 
 ###############################################################################
 
-foo bar
+bar
 splee
-quux
+OH
 
 <error>
 
@@ -126,7 +143,7 @@ DES MOINES
 IA
 50310
 
-(ODD Range 2701 - 2799) DOUGLAS AVE
+2701 DOUGLAS AVE
 DES MOINES
 IA
 50310-5840

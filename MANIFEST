@@ -5,7 +5,5 @@ MANIFEST
 README
 lib/Scrape/USPS/ZipLookup.pm
 lib/Scrape/USPS/ZipLookup/Address.pm
-lib/Scrape/USPS/ZipLookup/Request.pm
-lib/Scrape/USPS/ZipLookup/Response.pm
 t/address.t
 t/standardize.t

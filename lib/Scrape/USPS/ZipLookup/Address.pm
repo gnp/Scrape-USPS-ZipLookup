@@ -1,28 +1,28 @@
 #
 # Address.pm
 #
-# [ $Revision: 1.3 $ ]
+# Perl 5 module to standardize U.S. postal addresses by referencing the U.S.
+# Postal Service's web site:
 #
-# Perl 5 module to standardize U.S. postal addresses by referencing
-# the U.S. Postal Service's web site:
-#
-#     http://www.usps.gov/ncsc/lookups/lookup_zip+4.html'
+#     http://www.usps.com/zip4/
 #
 # BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
 # DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
 #
-# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
-# This program is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+# Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
+#
+# This program is free software. It is subject to the same license as Perl.
+#
+# [ $Revision: 1.4 $ ]
 #
 
 package Scrape::USPS::ZipLookup::Address;
 use strict;
 
+use Carp;
+
 use vars qw($VERBOSE);
 $VERBOSE = 0;
-
-use overload qw("") => \&to_string;
 
 use Carp;
 
@@ -64,9 +64,34 @@ sub new
   my %fields = map { ($_, '') } @all_fields;
   my $self   = bless { %fields }, $class;
 
-  $self->input_fields(@_) if @_;
+  return $_[0] if @_ and ref($_[0]) eq $class;
+  
+  if (@_) {
+    $self->input_fields(@_);
+  }
+  else {
+    confess "Cannot create empty $class!";
+  }
 
   return $self;
+}
+
+
+#
+# dump()
+#
+
+sub dump
+{
+  my $self = shift;
+
+  confess "Expected message" unless @_;
+
+  print "ADDRESS: ", shift, "\n";
+  foreach my $key (sort @all_fields) {
+    printf "  %s => '%s'\n", $key, $self->{$key};
+  }
+  print "\n";
 }
 
 
@@ -145,10 +170,14 @@ sub check_digit      { my $self = shift; $self->_field('Check Digit',      @_); 
 sub input_fields
 {
   my $self  = shift;
+
+  unless (@_) {
+    my %fields = map { ($_, $self->{$_}) } @input_fields;
+    print join("\n", %fields), "\n";
+    return %fields;
+  }
+
   my %fields = map { ($_, '') } @input_fields;
-
-  return map { ($_, $self->{$_}) } @input_fields unless @_;
-
   my %input;
 
   if (@_ == 1 and ref $_[0] and UNIVERSAL::isa($_[0], "Scrape::USPS::ZipLookup::Address")) {
@@ -196,9 +225,9 @@ sub input_fields
 
   foreach (@all_fields) { $self->{$_} = ''; }
 
-  foreach (keys %input) {
-    die "Illegal field '$_'!" unless $input_fields{$_};
-    $self->{$_} = $input{$_}
+  foreach my $key (keys %input) {
+    die "Illegal field '$key'!" unless $input_fields{$key};
+    $self->{$key} = $input{$key};
   }
 }
 
@@ -223,7 +252,21 @@ sub query
     $self->input_fields(%hash);
     return;
   } else {
-    $uri->query_form($self->input_fields());
+    my @query = (
+      Selection    => 1,
+      company_name => $self->firm,
+      urbanization => $self->urbanization,
+      address      => $self->delivery_address . ' ', # TODO: Extra space necessary?
+      address1     => $self->delivery_address,
+      address2     => '',                      # TODO: This is new stuff
+      city         => $self->city,
+      state        => $self->state,
+      zipcode      => $self->zip_code,
+      'Submit.x'   => 17, # TODO: What is this???
+      'Submit.y'   => 13, # TODO: What is this???
+    );
+
+    $uri->query_form(@query);
     return $uri->query;
   }
 }
@@ -378,7 +421,7 @@ sub to_string
 {
   my $self = shift;
 
-  return join("\n", $self->to_array);
+  return join("\n", $self->delivery_address, $self->city, $self->state, $self->zip_code);
 }
 
 
@@ -430,9 +473,9 @@ Gregor N. Purdy, C<gregor@focusresearch.com>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
-This program is free software; you can redistribute it and/or
-modify it under the same terms as Perl itself.
+Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
+
+This program is free software. It is subject to the same license as Perl.
 
 =cut
 

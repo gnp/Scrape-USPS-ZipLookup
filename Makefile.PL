@@ -1,28 +1,26 @@
 #
 # Makefile.PL
 #
-# [ $Revision: 1.2 $ ]
 #
-# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
-# This program is free software; you can redistribute it and/or
-# modify it under the same terms as Perl itself.
+# Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
+# This program is free software. It is subject to the same license as Perl.
+# [ $Revision: 1.3 $ ]
 #
 
 use ExtUtils::MakeMaker;
 
 WriteMakefile (
-	NAME         => 'Scrape::USPS::ZipLookup',
-	VERSION_FROM => 'lib/Scrape/USPS/ZipLookup.pm',
-	PREREQ_PM    => {
-		HTTP::Request          => 0,
-		HTTP::Request::Common  => 0,
-		HTTP::Response         => 0,
-		LWP::UserAgent         => 0,
-        URI                    => 0,
-	},
-	AUTHOR       => 'Gregor N. Purdy (gregor@focusresearch.com)',
-	ABSTRACT     => 'Programmatic interaction with the USPS Zip Code Lookup web application',
-	dist         => { COMPRESS => 'gzip -9f', SUFFIX => 'gz' }
+  NAME         => 'Scrape::USPS::ZipLookup',
+  VERSION_FROM => 'lib/Scrape/USPS/ZipLookup.pm',
+  PREREQ_PM    => {
+    WWW::Mechanize         => 0.35, # To communicate with USPS and get HTML
+    XML::Driver::HTML      => 0.06, # To generate SAX events from HTML
+    XML::Handler::YAWriter => 0.23, # To generate XML from SAX events
+    XML::XPath             => 1.12, # To extract addresses from XML
+  },
+  AUTHOR       => 'Gregor N. Purdy (gregor@focusresearch.com)',
+  ABSTRACT     => 'Programmatic interaction with the USPS Zip Code Lookup web application',
+  dist         => { COMPRESS => 'gzip -9f', SUFFIX => 'gz' }
 );
 
 #

@@ -1,4 +1,13 @@
 
+2.0 [2003-01-28]
+
+  * Uses WWW::Mechanize to interact with the USPS web application.
+
+  * Uses XML::Driver::HTML to convert resulting HTML into XML.
+
+  * Uses XML::XPath to extract the resulting address matches.
+
+
 1.1 [2002-07-13]
 
   * Now uses usps.com instead of usps.gov.
