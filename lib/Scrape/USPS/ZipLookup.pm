@@ -1,7 +1,7 @@
 #
 # ZipLookup.pm
 #
-# [ $Revision: 1.1 $ ]
+# [ $Revision: 1.2 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
@@ -20,7 +20,7 @@ package Scrape::USPS::ZipLookup;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '0.003';
+$VERSION = '1.0';
 
 use LWP::UserAgent;
 
