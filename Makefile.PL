@@ -1,7 +1,11 @@
 #
 # Makefile.PL
 #
-# [ $Revision: 1.1 $ ]
+# [ $Revision: 1.2 $ ]
+#
+# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
 #
 
 use ExtUtils::MakeMaker;

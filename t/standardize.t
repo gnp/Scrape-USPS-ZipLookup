@@ -2,7 +2,11 @@
 #
 # standardize.t - Test script.
 #
-# [ $Revision: 1.2 $ ]
+# [ $Revision: 1.3 $ ]
+#
+# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
+# This program is free software; you can redistribute it and/or
+# modify it under the same terms as Perl itself.
 #
 
 use strict;

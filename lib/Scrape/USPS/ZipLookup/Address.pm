@@ -1,7 +1,7 @@
 #
 # Address.pm
 #
-# [ $Revision: 1.2 $ ]
+# [ $Revision: 1.3 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
@@ -11,7 +11,7 @@
 # BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
 # DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
 #
-# Copyright (C) 1999-2001 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
 # This program is free software; you can redistribute it and/or
 # modify it under the same terms as Perl itself.
 #
@@ -430,7 +430,7 @@ Gregor N. Purdy, C<gregor@focusresearch.com>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999-2001 Gregor N. Purdy. All rights reserved.
+Copyright (C) 1999-2002 Gregor N. Purdy. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
