@@ -1,7 +1,7 @@
 #
 # ZipLookup.pm
 #
-# [ $Revision: 1.3 $ ]
+# [ $Revision: 1.4 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
@@ -252,7 +252,7 @@ discover that the service has changed, please email the author your findings.
 If an error occurs in trying to standardize the address, then no array
 will be returned. Otherwise, a four-element array will be returned.
 
-To see debugging output, call C<$zlu->verbose(1)>.
+To see debugging output, call C<$zlu-E<gt>verbose(1)>.
 
 
 =head1 TERMS OF USE
