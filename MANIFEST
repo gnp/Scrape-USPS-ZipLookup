@@ -9,3 +9,4 @@ script/stdaddr
 t/address.t
 t/standardize.t
 test.html
+META.yml                                 Module meta-data (added by MakeMaker)
