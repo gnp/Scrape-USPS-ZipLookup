@@ -1,3 +1,22 @@
+2.3 [2004-10-15]
+
+  * Be a little more flexible about zip code format, per an email
+    from Michael S. Muegel <mike@muegel.org> (although the example
+    he gave of an adress returning XXXXX-YY where XXXXX was a good
+    looking zip code but YY was some oddball text like "ND" didn't
+    work that way for me).
+
+  * Adapted to latest USPS changes, including new welcome page URL
+    and new format of results. RT ticket submitted 2004-09-28 by
+    <rayvd@bludgeon.org>, and email notice to me from:
+
+      http://rt.cpan.org/Ticket/Display.html?id=7804
+
+    Also reported by Chris Johnson <cjohnson@corp.digitalpath.net>
+    and John Baker <johnb@listbrokers.com> via personal emails on
+    2004-09-28.
+
+
 2.2 [2004-07-02]
 
   * Updated start URL for first page fetch to match new operation of
