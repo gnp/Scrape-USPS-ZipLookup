@@ -27,7 +27,8 @@ use WWW::Mechanize;         # To communicate with USPS and get HTML
 
 use Scrape::USPS::ZipLookup::Address;
 
-my $start_url = 'http://www.usps.com/zip4/';
+my $start_url = 'http://zip4.usps.com/zip4/welcome.htm';
+my $form_id   = 'frmzip';
 
 
 #
@@ -113,8 +114,19 @@ sub std_inner
   my $agent = $self->user_agent;
   $agent->quiet(not $self->verbose);
 
-  $agent->get($start_url);
-  $agent->form(1); # The first form on the page is the one we'll fill out.
+  my $response = $agent->get($start_url);
+
+  die "Error communicating with server" unless $response;
+
+  my $content = $agent->{content};
+
+  if ($self->verbose) {
+    print "-" x 79, "\n";
+    print "Initial Page HTTP Response:\n";
+    print $response->as_string;
+  }
+
+  $agent->form($form_id);
 
   $agent->field(Selection => 1);
 
@@ -131,7 +143,7 @@ sub std_inner
   $agent->field(state     => uc $addr->state);
   $agent->field(zipcode   => uc $addr->zip_code);
 
-  my $response = $agent->click; # An HTTP::Response instance
+  $response = $agent->click; # An HTTP::Response instance
 
 #
 # NOTE 2003-12-12: Can't do anymore. req() method is gone in 0.7 WWW::Mechanize!
@@ -144,7 +156,7 @@ sub std_inner
 
   die "Error communicating with server" unless $response;
 
-  my $content = $agent->{content};
+  $content = $agent->{content};
 
   if ($self->verbose) {
     print "-" x 79, "\n";
