@@ -1,7 +1,7 @@
 #
 # Address.pm
 #
-# [ $Revision: 1.1 $ ]
+# [ $Revision: 1.2 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
@@ -23,6 +23,8 @@ use vars qw($VERBOSE);
 $VERBOSE = 0;
 
 use overload qw("") => \&to_string;
+
+use Carp;
 
 use URI;
 
@@ -149,7 +151,9 @@ sub input_fields
 
   my %input;
 
-  if (@_ == 1 and ref $_[0] eq 'HASH') {
+  if (@_ == 1 and ref $_[0] and UNIVERSAL::isa($_[0], "Scrape::USPS::ZipLookup::Address")) {
+    return $_[0];
+  } elsif (@_ == 1 and ref $_[0] eq 'HASH') {
     %input = %{$_[0]};
   } elsif (@_ == 6) {
     %input = (
@@ -187,7 +191,7 @@ sub input_fields
       'Zip Code'         => $_[1], 
     );
   } else {
-    die "Unrecognized input field specification!";
+    confess "Unrecognized input (" . scalar(@_) . " args: " . join(', ', map { ref } @_) . ")!";
   }
 
   foreach (@all_fields) { $self->{$_} = ''; }

@@ -46,7 +46,7 @@ SYNOPSIS
 
 DESCRIPTION
     The United States Postal Service (USPS) has on its web site an HTML form
-    at "http://www.usps.gov/ncsc/lookups/lookup_zip+4.html" for
+    at "http://www.usps.com/ncsc/lookups/lookup_zip+4.html" for
     standardizing an address. Given a firm, urbanization, street address,
     city, state, and zip, it will put the address into standard form
     (provided the address is in their database) and display a page with the
@@ -70,7 +70,7 @@ DESCRIPTION
 
 TERMS OF USE
     BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE
-    PAGE AT "http://www.usps.gov/disclaimer.html". IN PARTICULAR, NOTE THAT
+    PAGE AT "http://www.usps.com/disclaimer.html". IN PARTICULAR, NOTE THAT
     THEY DO NOT PERMIT THE USE OF THEIR WEB SITE'S FUNCTIONALITY FOR
     COMMERCIAL PURPOSES. DO NOT USE THIS CODE IN A WAY THAT VIOLATES THE
     TERMS OF USE.

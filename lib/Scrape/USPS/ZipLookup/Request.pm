@@ -1,12 +1,12 @@
 #
 # Request.pm
 #
-# [ $Revision: 1.1 $ ]
+# [ $Revision: 1.2 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
 #
-#     http://www.usps.gov/ncsc/lookups/lookup_zip+4.html'
+#     http://www.usps.com/ncsc/lookups/lookup_zip+4.html'
 #
 # BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
 # DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
@@ -28,7 +28,7 @@ use vars qw(@ISA);
 
 @ISA = qw(HTTP::Request);
 
-my $form_url  = 'http://www.usps.gov/cgi-bin/zip4/zip4inq2';
+my $form_url  = 'http://www.usps.com/cgi-bin/zip4/zip4inq2';
   
 
 #
@@ -129,14 +129,14 @@ Scrape::USPS::ZipLookup::Request - Standardize U.S. postal addresses.
 
 This subclass of HTTP::Request is used to form requests of The United
 States Postal Service (USPS) HTML form at
-C<http://www.usps.gov/ncsc/lookups/lookup_zip+4.html> for standardizing
+C<http://www.usps.com/ncsc/lookups/lookup_zip+4.html> for standardizing
 an address.
 
 
 =head1 TERMS OF USE
 
 BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE
-PAGE AT C<http://www.usps.gov/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
+PAGE AT C<http://www.usps.com/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
 DO NOT PERMIT THE USE OF THEIR WEB SITE'S FUNCTIONALITY FOR COMMERCIAL
 PURPOSES. DO NOT USE THIS CODE IN A WAY THAT VIOLATES THE TERMS OF USE.
 

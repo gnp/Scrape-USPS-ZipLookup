@@ -1,12 +1,12 @@
 #
 # ZipLookup.pm
 #
-# [ $Revision: 1.2 $ ]
+# [ $Revision: 1.3 $ ]
 #
 # Perl 5 module to standardize U.S. postal addresses by referencing
 # the U.S. Postal Service's web site:
 #
-#     http://www.usps.gov/ncsc/lookups/lookup_zip+4.html
+#     http://www.usps.com/ncsc/lookups/lookup_zip+4.html
 #
 # BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
 # DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
@@ -20,7 +20,7 @@ package Scrape::USPS::ZipLookup;
 use strict;
 
 use vars qw($VERSION);
-$VERSION = '1.0';
+$VERSION = '1.1';
 
 use LWP::UserAgent;
 
@@ -233,7 +233,7 @@ Or, use the new interface:
 =head1 DESCRIPTION
 
 The United States Postal Service (USPS) has on its web site an HTML form at
-C<http://www.usps.gov/ncsc/lookups/lookup_zip+4.html>
+C<http://www.usps.com/ncsc/lookups/lookup_zip+4.html>
 for standardizing an address. Given a firm, urbanization, street address,
 city, state, and zip, it will put the address into standard form (provided
 the address is in their database) and display a page with the resulting
@@ -252,13 +252,13 @@ discover that the service has changed, please email the author your findings.
 If an error occurs in trying to standardize the address, then no array
 will be returned. Otherwise, a four-element array will be returned.
 
-To see debugging output, call C<Scrape::USPS::ZipLookup::verbose(1)>.
+To see debugging output, call C<$zlu->verbose(1)>.
 
 
 =head1 TERMS OF USE
 
 BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE
-PAGE AT C<http://www.usps.gov/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
+PAGE AT C<http://www.usps.com/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
 DO NOT PERMIT THE USE OF THEIR WEB SITE'S FUNCTIONALITY FOR COMMERCIAL
 PURPOSES. DO NOT USE THIS CODE IN A WAY THAT VIOLATES THE TERMS OF USE.
 
