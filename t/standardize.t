@@ -58,7 +58,9 @@ print "not " if $@ or not $zlu;
 print "ok 2 # Allocating a Scrape::USPS::ZipLookup instance\n";
 die "Bailing out..." if $@ or not $zlu;
 
-#$zlu->verbose(1);
+my $verbose = ((@ARGV >= 1) and ($ARGV[0] eq '-v')) ? 1 : 0;
+
+$zlu->verbose($verbose);
 
 my $i = 2;
 my $failed = 0;
@@ -69,10 +71,13 @@ while (@tries) {
 
   $i++;
 
+  my $message = undef;
+
   my @result = $zlu->std_addr(@in);
 
   if ($out[0] eq '<error>') {
     if (@result) {
+      $message = "Expected error, but didn't get one";
       print 'not ';
       $failed++;
     }
@@ -81,19 +86,26 @@ while (@tries) {
       my $expected = join("\n", @out);
       my $received = $result[0]->to_string;
       if ($expected ne $received) {
-        print "  EXPECTED: $expected\n";
-        print "  RECEIVED: $received\n";
+        $message = "Results didn't match expected:\n"
+          . "  EXPECTED: $expected\n"
+          . "  RECEIVED: $received";
         print 'not ';
         $failed++;
       }
     }
     else {
+      $message = "Expected match, but didn't get one";
       print 'not ';
       $failed++;
     }
   }
 
-  printf "ok %d\n", $i;
+  if ($message) {
+    printf "ok %d # %s\n", $i, $message;
+  }
+  else {
+    printf "ok %d\n", $i;
+  }
 }
 
 
@@ -149,4 +161,3 @@ IA
 50310-5840
 
 ###############################################################################
-
