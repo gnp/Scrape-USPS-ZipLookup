@@ -1,24 +1,48 @@
 NAME
-    Data::Address::Standardize - Standardize U.S. postal addresses.
+    Scrape::USPS::ZipLookup - Standardize U.S. postal addresses.
 
 SYNOPSIS
-      use Data::Address::Standardize;
-      ($street, $city, $state, $zip) = std_addr($street, $city, $state, $zip);
+    Use the old interface based on Data::Address::Standardize module:
+
+      use Scrape::USPS::ZipLookup;
+      my $zlu = Scrape::USPS::ZipLookup->new();
+      ($street, $city, $state, $zip) = $zlu->std_addr($street, $city, $state, $zip);
 
     or,
 
-      use Data::Address::Standardize;
+      use Scrape::USPS::ZipLookup;
+      my $zlu = Scrape::USPS::ZipLookup->new();
       # Read in a pipe-delimited data set like a filter.
       while(<>) {
           chomp;
           my @addr = split('\|');
           push @addr_list, [ @addr ];
       }
-      my @std_list = std_addrs(@addr_list);
+      my @std_list = $zlu->std_addrs(@addr_list);
       # Write a pipe-delimited data set to standard output.
       foreach (@std_list) {
           print join('|', @$_), "\n";
       }
+
+    Or, use the new interface:
+
+      use Scrape::USPS::ZipLookup::Address;
+      use Scrape::USPS::ZipLookup;
+
+      my $addr = Scrape::USPS::ZipLookup::Address->new(
+        'Firm'             => 'Focus Research, Inc.',
+        'Urbanization'     => '',
+        'Delivery Address' => '8080 Beckett Center Drive Suite 203',
+        'City'             => 'West Chester',
+        'State'            => 'OH',
+        'ZIP Code'         => '45069-5001'
+      );
+
+      my $zlu = Scrape::USPS::ZipLookup->new();
+
+      my @matches = $zlu->lookup($addr);
+
+      die "No matches!" unless @matches;
 
 DESCRIPTION
     The United States Postal Service (USPS) has on its web site an HTML form
@@ -34,7 +58,7 @@ DESCRIPTION
 
     Because the USPS could change or remove this functionality at any time,
     be prepared for the possibility that this code may fail to function. In
-    fact, as of this version, there is little error checking in place, so if
+    fact, as of this version, there is no error checking in place, so if
     they do change things, this code will most likely fail in a noisy way.
     If you discover that the service has changed, please email the author
     your findings.
@@ -42,7 +66,7 @@ DESCRIPTION
     If an error occurs in trying to standardize the address, then no array
     will be returned. Otherwise, a four-element array will be returned.
 
-    To see debugging output, call "Data::Address::Standardize::verbose(1)".
+    To see debugging output, call "Scrape::USPS::ZipLookup::verbose(1)".
 
 TERMS OF USE
     BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE

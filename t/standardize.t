@@ -2,14 +2,15 @@
 #
 # standardize.t - Test script.
 #
-# [ $Revision: 1.1 $ ]
+# [ $Revision: 1.2 $ ]
 #
 
 use strict;
-use Data::Address::Standardize;
+use Scrape::USPS::ZipLookup;
 
-Data::Address::Standardize::verbose(1);
+my $zlu = Scrape::USPS::ZipLookup->new();
 
+$zlu->verbose(1);
 
 #
 # Read in the tries:
@@ -57,7 +58,7 @@ while (@tries) {
 
   $i++;
 
-  my @result = std_addr(@in);
+  my @result = $zlu->std_addr(@in);
 
   if ($out[0] eq '<error>') {
     if (@result) {
