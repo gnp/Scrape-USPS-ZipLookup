@@ -132,7 +132,7 @@ sub std_inner
 
   $agent->field(city       => uc $addr->city);
   $agent->field(state      => uc $addr->state);
-  $agent->field(zipcode    => uc $addr->zip_code);
+  $agent->field(zip5	   => uc $addr->zip_code);
 
   $agent->field(visited    => 1);
   $agent->field(pagenumber => 0);
@@ -186,6 +186,7 @@ sub std_inner
 
   my @matches;
 
+  $content =~ s/(\cI|\cJ|\cM)//g;
   my @raw_matches = map { trim($_) } $content =~ m{<td headers="full" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)<br \/><\/td> }gsi;
 
   foreach my $raw_match (@raw_matches) {
