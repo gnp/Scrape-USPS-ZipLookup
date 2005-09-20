@@ -13,7 +13,7 @@ WriteMakefile (
   NAME         => 'Scrape::USPS::ZipLookup',
   VERSION_FROM => 'lib/Scrape/USPS/ZipLookup.pm',
   PREREQ_PM    => {
-    WWW::Mechanize         => 0.70, # To communicate with USPS and get HTML
+    WWW::Mechanize         => 1.14, # To communicate with USPS and get HTML
   },
   EXE_FILES    => [
     'script/stdaddr'
