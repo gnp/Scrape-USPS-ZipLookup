@@ -21,7 +21,7 @@ package Scrape::USPS::ZipLookup;
 use strict;
 use warnings;
 
-our $VERSION = '2.3.1';
+our $VERSION = '2.4';
 
 use WWW::Mechanize;         # To communicate with USPS and get HTML
 
