@@ -9,7 +9,7 @@
 # BE SURE TO READ AND UNDERSTAND THE TERMS OF USE SECTION IN THE
 # DOCUMENTATION, WHICH MAY BE FOUND AT THE END OF THIS SOURCE CODE.
 #
-# Copyright (C) 1999-2004 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2005 Gregor N. Purdy. All rights reserved.
 #
 # This program is free software. It is subject to the same license as Perl.
 #
