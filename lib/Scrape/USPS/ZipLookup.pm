@@ -134,9 +134,22 @@ sub std_inner
   $agent->field(state      => uc $addr->state);
   $agent->field(zip5	   => uc $addr->zip_code);
 
-  $agent->field(visited    => 1);
-  $agent->field(pagenumber => 0);
-  $agent->field(firmname   => '');
+  {
+    #
+    # Stupid hack because HTML::Form does a Carp::carp when we set these read-only
+    # fields! (And, setting $agent->quiet(0) doesn't help, nor does using onwarn =>
+    # undef in the constructor for the user agent object!
+    #
+
+    no strict;
+    no warnings;
+    open SAVE_STDERR, ">&STDERR";
+    close STDERR;
+    $agent->field(visited    => 1);
+    $agent->field(pagenumber => 0);
+    $agent->field(firmname   => '');
+    open STDERR, ">&SAVE_STDERR";
+  }
 
   $response = $agent->click('submit'); # An HTTP::Response instance
 
