@@ -299,141 +299,94 @@ __END__
 
 =head1 NAME
 
-Scrape::USPS::ZipLookup::Address - Address Class for USPS ZIP Code Lookups
-
+Scrape::USPS::ZipLookup::Address - U.S. postal addresses.
 
 =head1 SYNOPSIS
 
+  use Scrape::USPS::ZipLookup;
   use Scrape::USPS::ZipLookup::Address;
 
+  my $addr = Scrape::USPS::ZipLookup::Address->new({
+    'Delivery Address' => $address,
+    'City'             => $city,
+    'State'            => $state,
+    'Zip Code'         => $zip
+  };
 
-=head1 DESCRIPTION
+  my $zlu = Scrape::USPS::ZipLookup->new();
 
-TODO
+  my @matches = $zlu->std_addr($addr);
 
-
-=head1 TERMS OF USE
-
-BE SURE TO READ AND FOLLOW THE UNITED STATES POSTAL SERVICE TERMS OF USE
-PAGE AT C<http://www.usps.gov/disclaimer.html>. IN PARTICULAR, NOTE THAT THEY
-DO NOT PERMIT THE USE OF THEIR WEB SITE'S FUNCTIONALITY FOR COMMERCIAL
-PURPOSES. DO NOT USE THIS CODE IN A WAY THAT VIOLATES THE TERMS OF USE.
-
-The author believes that the example usage given above does not violate
-these terms, but sole responsibility for conforming to the terms of use
-belongs to the user of this code, not the author.
-
-
-=head1 AUTHOR
-
-Gregor N. Purdy, C<gregor@focusresearch.com>.
-
-
-=head1 COPYRIGHT
-
-Copyright (C) 1999-2003 Gregor N. Purdy. All rights reserved.
-
-This program is free software. It is subject to the same license as Perl.
-
-=cut
-
-use strict;
-
-use HTTP::Response;
-
-use vars qw(@ISA);
-
-@ISA = qw(HTTP::Response);
-
-
-#
-# matches()
-#
-# Output: One array reference for each address returned. Each array
-#         contains the Street Address, City, State, and Zip.
-#
-
-sub matches
-{
-	my $self = shift;
-	my $addr = $self->content;
-
-	return unless ($addr =~ m/The standardized address is:/sm);
-
-	#
-	# First, chop out all the lines preceding and following the
-	# addresses:
-	#
-
-	$addr =~ s/^.*The standardized address is:<p>(.*)<HR><center>.*$/$1/sm;
-
-    #
-    # Now, split  on <HR>
-    #
-
-    my @addrs = split(/<HR>/sm, $addr);
-    my @output;
-
-    foreach (@addrs) {
-      push @output, scrape_address($_);
+  if (@matches) {
+    printf "\n%d matches:\n", scalar(@matches);
+    foreach my $match (@matches) {
+      print "-" x 39, "\n";
+      print $match->to_dump;
+      print "\n";
     }
-
-    return @output;
-}
-
-
-#
-# first_match()
-#
-
-sub first_match
-{
-	my $self = shift;
-
-    my @addrs = $self->matches;
-
-    return unless @addrs;
-
-    my $first = shift @addrs;
-
-    my %addr = %$first;
-
-    return ($addr{STREET}, $addr{CITY}, $addr{STATE}, $addr{ZIP});
-}
-
-
-#
-# Proper module termination:
-#
-
-1;
-
-__END__
-
-#
-# Documentation:
-#
-
-=pod
-
-=head1 NAME
-
-Scrape::USPS::ZipLookup::Response - Standardize U.S. postal addresses.
-
-=head1 SYNOPSIS
-
-  use Scrape::USPS::ZipLookup::Response;
-
-  my $res = $user_agent->...;
-  bless $res, 'Scrape::USPS::ZipLookup::Response';
-
+    print "-" x 39, "\n";
+  }
+  else {
+    print "No matches!\n";
+  }
 
 =head1 DESCRIPTION
 
-Used to parse an HTML response to a request made via 
-The United States Postal Service (USPS) HTML form at
-C<http://www.usps.gov/ncsc/lookups/lookup_zip+4.html>
-for standardizing an address.
+Results from Scrape::USPS::ZipLookup calls are of this type. 
+
+
+=head2 FIELDS
+
+Basic information:
+
+=over 4
+
+=item * firm
+
+=item * urbanization
+
+=item * delivery_address
+
+=item * city
+
+=item * state
+
+=item * zip_code
+
+=back
+
+Detailed information (see the U.S. Postal Service web site for definitions at
+L<http://zip4.usps.com/zip4/pu_mailing_industry_def.htm>):
+
+=over 4
+
+=item * carrier_route
+
+=item * county
+
+=item * delivery_point
+
+=item * check_digit
+
+=item * lac_indicator
+
+=item * elot_sequence
+
+=item * elot_indicator
+
+=item * record_type
+
+=item * pmb_designator
+
+=item * pmb_number
+
+=item * default_address
+
+=item * early_warning
+
+=item * valid
+
+=back
 
 
 =head1 TERMS OF USE
@@ -455,7 +408,7 @@ Gregor N. Purdy, C<gregor@focusresearch.com>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999-2001 Gregor N. Purdy. All rights reserved.
+Copyright (C) 1999-2006 Gregor N. Purdy. All rights reserved.
 This program is free software; you can redistribute it and/or
 modify it under the same terms as Perl itself.
 
