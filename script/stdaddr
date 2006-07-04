@@ -50,7 +50,7 @@ my $addr = Scrape::USPS::ZipLookup::Address->new(
 
 my $zlu = Scrape::USPS::ZipLookup->new();
 
-$zlu->verbose(1);
+#$zlu->verbose(1);
 
 my @matches = $zlu->std_addr($addr);
 
