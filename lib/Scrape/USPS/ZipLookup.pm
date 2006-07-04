@@ -121,11 +121,11 @@ sub std_inner
 
   my $content = $agent->{content};
 
-  if ($self->verbose) {
-    print "-" x 79, "\n";
-    print "Initial Page HTTP Response:\n";
-    print $response->as_string;
-  }
+#  if ($self->verbose) {
+#    print "-" x 79, "\n";
+#    print "Initial Page HTTP Response:\n";
+#    print $response->as_string;
+#  }
 
   $agent->form_name($form_name);
 
@@ -147,7 +147,7 @@ sub std_inner
     open SAVE_STDERR, ">&STDERR";
     close STDERR;
     $agent->field(visited    => 1);
-    $agent->field(pagenumber => 0);
+    $agent->field(pagenumber => 'all');
     $agent->field(firmname   => '');
     open STDERR, ">&SAVE_STDERR";
   }
@@ -167,11 +167,11 @@ sub std_inner
 
   $content = $agent->{content};
 
-  if ($self->verbose) {
-    print "-" x 79, "\n";
-    print "HTTP Response:\n";
-    print $response->as_string;
-  }
+#  if ($self->verbose) {
+#    print "-" x 79, "\n";
+#    print "HTTP Response:\n";
+#    print $response->as_string;
+#  }
 
   #
   # Time to Parse:
@@ -201,23 +201,60 @@ sub std_inner
   my @matches;
 
   $content =~ s/(\cI|\cJ|\cM)//g;
-  my @raw_matches = map { trim($_) } $content =~ m{<td headers="full" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)<br \/><\/td> }gsi;
+  my @raw_matches = map { trim($_) } $content =~ m{<td headers="full" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)>Mailing Industry Information</a>}gsi;
 
   foreach my $raw_match (@raw_matches) {
-    my $carrier_route  = undef;
-    my $county         = undef;
-    my $delivery_point = undef;
-    my $check_digit    = undef;
-
-#    if ($cell =~ m/mail_info_pop2.jsp\?carrier=(\w*)&county=(\w*)&dpoint=(\w*)&cdigit=(\w*)&lac=&elot=0176&elotind=A&rectype=S&pmbdes=&pmbnum=&dflag=&ews="
-
-    if ($raw_match =~ m/mail_info_pop2.jsp\?carrier=(\w*)&county=(\w*)&dpoint=(\w*)&cdigit=(\w*)/i) {
-      $carrier_route  = $1;
-      $county         = $2;
-      $delivery_point = $3;
-      $check_digit    = $4;
+    if ($self->verbose) {
+      print "-" x 79, "\n";
+      print "Raw match:\n";
+      print "$raw_match\n";
     }
 
+    my $carrier_route   = undef;
+    my $county          = undef;
+    my $delivery_point  = undef;
+    my $check_digit     = undef;
+    my $lac_indicator   = undef;
+    my $elot_sequence   = undef;
+    my $elot_indicator  = undef;
+    my $record_type     = undef;
+    my $pmb_designator  = undef;
+    my $pmb_number      = undef;
+    my $default_address = undef;
+    my $early_warning   = undef;
+    my $valid           = undef;
+
+    if ($raw_match =~ m/mailingIndustryPopup2?[(](.*?)[)];/im) {
+      my $args = $1;
+
+      # Reformat to pipe-delimited
+      $args =~ s/^'//;
+      $args =~ s/\s*'?\s*,\s*'?\s*/\|/g;
+      $args =~ s/'$//;
+
+      my @args = split(/\|/, $args);
+
+      $carrier_route   = $args[0]  ne '' ? $args[0]  : undef;
+      $county          = $args[1]  ne '' ? $args[1]  : undef;
+      $delivery_point  = $args[2]  ne '' ? $args[2]  : undef;
+      $check_digit     = $args[3]  ne '' ? $args[3]  : undef;
+      $lac_indicator   = $args[4]  ne '' ? $args[4]  : undef;
+      $elot_sequence   = $args[5]  ne '' ? $args[5]  : undef;
+      $elot_indicator  = $args[6]  ne '' ? $args[6]  : undef;
+      $record_type     = $args[7]  ne '' ? $args[7]  : undef;
+      $pmb_designator  = $args[8]  ne '' ? $args[8]  : undef;
+      $pmb_number      = $args[9]  ne '' ? $args[9]  : undef;
+      $default_address = $args[10] ne '' ? $args[10] : undef;
+      $early_warning   = $args[11] ne '' ? $args[11] : undef;
+      $valid           = $args[12] ne '' ? $args[12] : undef;
+    }
+    else {
+      if ($self->verbose) {
+        print "WARNING: Could not find Mailing Industry info!\n";
+      }
+    }
+
+    $raw_match =~ s{</td>.*}{}g;
     $raw_match =~ s{</?font.*?>}{}g;
     $raw_match =~ s{</?span.*?>}{}g;
     $raw_match =~ s{</?a.*?>}{}g;
@@ -232,16 +269,30 @@ sub std_inner
 
     my ($city, $state, $zip) = ($1, $2, $3);
 
-#    print("-" x 70, "\n");
-#    print "Address:        $address\n";
-#    print "City:           $city\n";
-#    print "State:          $state\n";
-#    print "Zip:            $zip\n";
-#    print "Carrier Route:  $carrier_route\n";
-#    print "County:         $county\n";
-#    print "Delivery Point: $delivery_point\n";
-#    print "Check Digit:    $check_digit\n";
-#    print "\n";
+    if ($self->verbose) {
+      print("-" x 70, "\n");
+
+      print "Address:         $address\n";
+      print "City:            $city\n";
+      print "State:           $state\n";
+      print "Zip:             $zip\n";
+
+      print "Carrier Route:   $carrier_route\n"   if defined $carrier_route;
+      print "County:          $county\n"          if defined $county;
+      print "Delivery Point:  $delivery_point\n"  if defined $delivery_point;
+      print "Check Digit:     $check_digit\n"     if defined $check_digit;
+      print "LAC Indicator:   $lac_indicator\n"   if defined $lac_indicator;
+      print "eLOT Sequence:   $elot_sequence\n"   if defined $elot_sequence;
+      print "eLOT Indicator:  $elot_indicator\n"  if defined $elot_indicator;
+      print "Record Type:     $record_type\n"     if defined $record_type;
+      print "PMB Designator:  $pmb_designator\n"  if defined $pmb_designator;
+      print "PMB Number:      $pmb_number\n"      if defined $pmb_number;
+      print "Default Address: $default_address\n" if defined $default_address;
+      print "Early Warning:   $early_warning\n"   if defined $early_warning;
+      print "Valid:           $valid\n"           if defined $valid;
+
+      print "\n";
+    }
 
     my $match = Scrape::USPS::ZipLookup::Address->new($address, $city, $state, $zip);
 
@@ -249,6 +300,16 @@ sub std_inner
     $match->county($county);
     $match->delivery_point($delivery_point);
     $match->check_digit($check_digit);
+
+    $match->lac_indicator($lac_indicator);
+    $match->elot_sequence($elot_sequence);
+    $match->elot_indicator($elot_indicator);
+    $match->record_type($record_type);
+    $match->pmb_designator($pmb_designator);
+    $match->pmb_number($pmb_number);
+    $match->default_address($default_address);
+    $match->early_warning($early_warning);
+    $match->valid($valid);
 
     push @matches, $match;
   }
@@ -385,6 +446,12 @@ If an error occurs in trying to standardize the address, then no array
 will be returned. Otherwise, a four-element array will be returned.
 
 To see debugging output, call C<< $zlu->verbose(1) >>.
+
+
+=head1 FIELDS
+
+This page at the U.S. Postal Service web site contains definitions of some
+of the fields: C<http://zip4.usps.com/zip4/pu_mailing_industry_def.htm>
 
 
 =head1 TERMS OF USE

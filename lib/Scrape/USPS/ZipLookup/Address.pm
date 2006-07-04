@@ -42,7 +42,16 @@ my @output_fields = (
   'Carrier Route',
   'County',
   'Delivery Point',
-  'Check Digit'
+  'Check Digit',
+  'LAC Indicator',
+  'eLOT Sequence',
+  'eLOT Indicator',
+  'Record Type',
+  'PMB Designator',
+  'PMB Number',
+  'Default Address',
+  'Early Warning',
+  'Valid',
 );
 my %output_fields = map { ($_, 1) } @output_fields;
 
@@ -61,7 +70,7 @@ my %all_fields = map { ($_, 1) } @all_fields;
 sub new
 {
   my $class  = shift;
-  my %fields = map { ($_, '') } @all_fields;
+  my %fields = map { ($_, undef) } @all_fields;
   my $self   = bless { %fields }, $class;
 
   return $_[0] if @_ and ref($_[0]) eq $class;
@@ -84,31 +93,18 @@ sub new
 sub dump
 {
   my $self = shift;
+  my $message = shift;
 
-  confess "Expected message" unless @_;
+  confess "Expected message" unless $message;
 
-  print "ADDRESS: ", shift, "\n";
+  print "ADDRESS: $message\n";
+
   foreach my $key (sort @all_fields) {
+    next unless defined $self->{$key};
     printf "  %s => '%s'\n", $key, $self->{$key};
   }
+
   print "\n";
-}
-
-
-#
-# new_html()
-#
-
-sub new_html
-{
-  my $class = shift;
-  my $html  = shift;
-
-  my $self = $class->new();
-
-  $self->html($html);
-
-  return $self;
 }
 
 
@@ -158,6 +154,16 @@ sub county           { my $self = shift; $self->_field('County',           @_); 
 sub delivery_point   { my $self = shift; $self->_field('Delivery Point',   @_); }
 sub check_digit      { my $self = shift; $self->_field('Check Digit',      @_); }
 
+sub lac_indicator    { my $self = shift; $self->_field('LAC Indicator',    @_); }
+sub elot_sequence    { my $self = shift; $self->_field('eLOT Sequence',    @_); }
+sub elot_indicator   { my $self = shift; $self->_field('eLOT Indicator',   @_); }
+sub record_type      { my $self = shift; $self->_field('Record Type',      @_); }
+sub pmb_designator   { my $self = shift; $self->_field('PMB Designator',   @_); }
+sub pmb_number       { my $self = shift; $self->_field('PMB Number',       @_); }
+sub default_address  { my $self = shift; $self->_field('Default Address',  @_); }
+sub early_warning    { my $self = shift; $self->_field('Early Warning',    @_); }
+sub valid            { my $self = shift; $self->_field('Valid',            @_); }
+
 
 #
 # input_fields()
@@ -177,7 +183,7 @@ sub input_fields
     return %fields;
   }
 
-  my %fields = map { ($_, '') } @input_fields;
+  my %fields = map { ($_, undef) } @input_fields;
   my %input;
 
   if (@_ == 1 and ref $_[0] and UNIVERSAL::isa($_[0], "Scrape::USPS::ZipLookup::Address")) {
@@ -223,51 +229,11 @@ sub input_fields
     confess "Unrecognized input (" . scalar(@_) . " args: " . join(', ', map { ref } @_) . ")!";
   }
 
-  foreach (@all_fields) { $self->{$_} = ''; }
+  foreach (@all_fields) { $self->{$_} = undef; }
 
   foreach my $key (keys %input) {
     die "Illegal field '$key'!" unless $input_fields{$key};
     $self->{$key} = $input{$key};
-  }
-}
-
-
-#
-# query()
-#
-# Set or get the query string that forms the content of the HTTP request
-# for scraping. This ends up calling the input_fields() function to set
-# or get the input fields.
-#
-
-sub query
-{
-  my $self = shift;
-
-  my $uri = URI->new('http:');
-
-  if (@_) {
-    $uri->query(shift);
-    my %hash = $uri->query_form();
-    $self->input_fields(%hash);
-    return;
-  } else {
-    my @query = (
-      Selection    => 1,
-      company_name => $self->firm,
-      urbanization => $self->urbanization,
-      address      => $self->delivery_address . ' ', # TODO: Extra space necessary?
-      address1     => $self->delivery_address,
-      address2     => '',                      # TODO: This is new stuff
-      city         => $self->city,
-      state        => $self->state,
-      zipcode      => $self->zip_code,
-      'Submit.x'   => 17, # TODO: What is this???
-      'Submit.y'   => 13, # TODO: What is this???
-    );
-
-    $uri->query_form(@query);
-    return $uri->query;
   }
 }
 

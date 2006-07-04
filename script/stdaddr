@@ -50,7 +50,7 @@ my $addr = Scrape::USPS::ZipLookup::Address->new(
 
 my $zlu = Scrape::USPS::ZipLookup->new();
 
-#$zlu->verbose(1);
+$zlu->verbose(1);
 
 my @matches = $zlu->std_addr($addr);
 
@@ -58,7 +58,8 @@ if (@matches) {
   printf "\n%d matches:\n", scalar(@matches);
   foreach my $match (@matches) {
     print "-" x 39, "\n";
-    print $match->to_string;
+#    print $match->to_string;
+    print $match->to_dump;
     print "\n";
   }
   print "-" x 39, "\n";
