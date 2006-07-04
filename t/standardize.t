@@ -81,6 +81,13 @@ while (@tries) {
       print 'not ';
       $failed++;
     }
+  }
+  elsif ($out[0] eq '<multiple>') {
+    if (@result < 2) {
+      $message = "Expected multiple matches, but got " . scalar(@result);
+      print 'not ';
+      $failed++;
+    }
   } else {
     if (@result) {
       my $expected = join("\n", @out);
@@ -107,7 +114,6 @@ while (@tries) {
     printf "ok %d\n", $i;
   }
 }
-
 
 exit $failed;
 
@@ -167,9 +173,6 @@ Denver
 CO
 80202
 
-1670 Broadway
-Denver
-CO
-80202
+<multiple>
 
 ###############################################################################

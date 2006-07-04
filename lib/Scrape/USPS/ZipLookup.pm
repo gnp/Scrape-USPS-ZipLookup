@@ -201,7 +201,7 @@ sub std_inner
   my @matches;
 
   $content =~ s/(\cI|\cJ|\cM)//g;
-  my @raw_matches = map { trim($_) } $content =~ m{<td headers="full" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)>Mailing Industry Information</a>}gsi;
+  my @raw_matches = map { trim($_) } $content =~ m{<td headers="\w+" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)>Mailing Industry Information</a>}gsi;
 
   foreach my $raw_match (@raw_matches) {
     if ($self->verbose) {
@@ -234,19 +234,19 @@ sub std_inner
 
       my @args = split(/\|/, $args);
 
-      $carrier_route   = $args[0]  ne '' ? $args[0]  : undef;
-      $county          = $args[1]  ne '' ? $args[1]  : undef;
-      $delivery_point  = $args[2]  ne '' ? $args[2]  : undef;
-      $check_digit     = $args[3]  ne '' ? $args[3]  : undef;
-      $lac_indicator   = $args[4]  ne '' ? $args[4]  : undef;
-      $elot_sequence   = $args[5]  ne '' ? $args[5]  : undef;
-      $elot_indicator  = $args[6]  ne '' ? $args[6]  : undef;
-      $record_type     = $args[7]  ne '' ? $args[7]  : undef;
-      $pmb_designator  = $args[8]  ne '' ? $args[8]  : undef;
-      $pmb_number      = $args[9]  ne '' ? $args[9]  : undef;
-      $default_address = $args[10] ne '' ? $args[10] : undef;
-      $early_warning   = $args[11] ne '' ? $args[11] : undef;
-      $valid           = $args[12] ne '' ? $args[12] : undef;
+      $carrier_route   = (defined $args[0]  && $args[0]  ne '') ? $args[0]  : undef;
+      $county          = (defined $args[1]  && $args[1]  ne '') ? $args[1]  : undef;
+      $delivery_point  = (defined $args[2]  && $args[2]  ne '') ? $args[2]  : undef;
+      $check_digit     = (defined $args[3]  && $args[3]  ne '') ? $args[3]  : undef;
+      $lac_indicator   = (defined $args[4]  && $args[4]  ne '') ? $args[4]  : undef;
+      $elot_sequence   = (defined $args[5]  && $args[5]  ne '') ? $args[5]  : undef;
+      $elot_indicator  = (defined $args[6]  && $args[6]  ne '') ? $args[6]  : undef;
+      $record_type     = (defined $args[7]  && $args[7]  ne '') ? $args[7]  : undef;
+      $pmb_designator  = (defined $args[8]  && $args[8]  ne '') ? $args[8]  : undef;
+      $pmb_number      = (defined $args[9]  && $args[9]  ne '') ? $args[9]  : undef;
+      $default_address = (defined $args[10] && $args[10] ne '') ? $args[10] : undef;
+      $early_warning   = (defined $args[11] && $args[11] ne '') ? $args[11] : undef;
+      $valid           = (defined $args[12] && $args[12] ne '') ? $args[12] : undef;
     }
     else {
       if ($self->verbose) {
@@ -254,15 +254,38 @@ sub std_inner
       }
     }
 
-    $raw_match =~ s{</td>.*}{}g;
+    $raw_match =~ s{</td>\s*<td.*?>}{ }g;
     $raw_match =~ s{</?font.*?>}{}g;
     $raw_match =~ s{</?span.*?>}{}g;
     $raw_match =~ s{</?a.*?>}{}g;
     $raw_match =~ s{&nbsp;}{ }g;
     $raw_match =~ s{^.*?:\s*}{}g;
+    $raw_match =~ s{\s+}{ }g;
     $raw_match =~ s{<!--<(.*?)/>-->}{}g;
+    $raw_match =~ s{<a.*$}{};
+    $raw_match =~ s{<br\s*/?>\s*$}{};
 
-    my ($address, $city_state_zip) = split( /\s*<br\s*\/?>\s*/, $raw_match);
+    if ($self->verbose) {
+      print "-" x 79, "\n";
+      print "Distilled match:\n";
+      print "$raw_match\n";
+    }
+
+    my @parts = split( /\s*<br\s*\/?>\s*/, $raw_match);
+
+    my $firm = undef;
+    my $address = undef;
+    my $city_state_zip = undef;
+
+    if (@parts == 2) {
+      ($address, $city_state_zip) = @parts;
+    }
+    elsif (@parts == 3) {
+      ($firm, $address, $city_state_zip) = @parts;
+    }
+    else {
+      die "Parts = " . scalar(@parts) . "!";
+    }
 
     next unless $city_state_zip;
     next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d{5}(-\d{4})?)/);
@@ -271,6 +294,8 @@ sub std_inner
 
     if ($self->verbose) {
       print("-" x 70, "\n");
+
+      print "Firm:            $firm\n"            if defined $firm;;
 
       print "Address:         $address\n";
       print "City:            $city\n";
@@ -295,6 +320,8 @@ sub std_inner
     }
 
     my $match = Scrape::USPS::ZipLookup::Address->new($address, $city, $state, $zip);
+
+    $match->firm($firm);
 
     $match->carrier_route($carrier_route);
     $match->county($county);
