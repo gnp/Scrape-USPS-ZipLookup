@@ -1,8 +1,8 @@
 #
 # Address.pm
 #
-# Perl 5 module to standardize U.S. postal addresses by referencing the U.S.
-# Postal Service's web site:
+# Perl 5 module to represent U.S. postal addresses for the purpose of
+# standardizing via the U.S. Postal Service's web site:
 #
 #     http://www.usps.com/zip4/
 #
@@ -13,7 +13,7 @@
 #
 # This program is free software. It is subject to the same license as Perl.
 #
-# [ $Revision: 1.4 $ ]
+# [ $Id$ ]
 #
 
 package Scrape::USPS::ZipLookup::Address;
