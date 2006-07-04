@@ -169,8 +169,7 @@ sub valid            { my $self = shift; $self->_field('Valid',            @_); 
 # input_fields()
 #
 # Set or get all input fields simultaneously. When setting, any unspecified
-# fields are set to the empty string and all output fields are set to the
-# empty string as well.
+# fields are set to undef and all output fields are set to the undef as well.
 #
 
 sub input_fields
@@ -235,113 +234,6 @@ sub input_fields
     die "Illegal field '$key'!" unless $input_fields{$key};
     $self->{$key} = $input{$key};
   }
-}
-
-
-#
-# html()
-#
-# Set via HTML fragment obtained from HTTP::Response.
-#
-
-sub html
-{
-  my $self = shift;
-
-  my ($addr) = @_;
-  my $table;
-  my $trash;
-  my %data;
-
-  #
-  # First, split it into the address proper, and the table of additional
-  # information:
-  #
-
-  unless ($addr =~ s/^(.*)<TABLE(\s+[^>]*)?>(.*)<\/TABLE>(.*)$//sim) {
-    die "Bad address: Can't find <TABLE> begin tag!: \n\n>>>>>\n$addr\n<<<<<\n\n";
-  }
-
-  $addr  = $1;
-  $table = $3;
-  $trash = $4;
-
-  #
-  # Now, scrape information from the table:
-  #
-
-  $table =~ s/<\/?[a-z]+>//ig; # Remove all begin and end tags
-  $table =~ s/^\s*//mg;        # Remove leading whitespace.
-  $table =~ s/\s*$//mg;        # Remove trailing whitespace.
-  $table =~ s/\n+/\n/mg;       # Delete any extra newlines
-
-  print STDERR "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n" if $VERBOSE;
-  print STDERR ">> TABLE:\n$table\n" if $VERBOSE;
-  print STDERR "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" if $VERBOSE;
-
-  foreach (split(/\n/m, $table)) {
-    m/^([a-z ]*)\s+:\s+(.*)$/i or die "Bad table field: \"$_\"!\n";
-    $self->_field($1, $2);
-  }
-
-  #
-  # Now, perform some simple transformations on the address to get it into shape:
-  #
-
-  $addr =~ s/<\/?[a-z]+>//ig;  # Remove all begin and end tags
-  $addr =~ s/^\s*//mg;         # Remove leading whitespace.
-  $addr =~ s/\s*$//mg;         # Remove trailing whitespace.
-  $addr =~ s/ +/ /g;           # Collapse spaces.
-
-  print STDERR "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n" if $VERBOSE;
-  print STDERR ">> ADDRESS:\n$addr\n" if $VERBOSE;
-  print STDERR "^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n" if $VERBOSE;
-
-  my @addr = split(/\n/m, $addr);
-
-  my $city_state_zip = pop @addr;
-
-  $city_state_zip =~ m/^(.*) ([A-Z][A-Z]) (\d{5}(-\d{4})?)$/
-    or die "Unrecognized city-state-zip format '$city_state_zip'!";
-
-  my ($city, $state, $zip_code) = ($1, $2, $3);
-
-  my $delivery_address = pop @addr;
-
-  if (@addr and $addr[-1] =~ m/^\((EVEN|ODD) Range [0-9]+ - [0-9]+\)$/) {
-    $delivery_address  = pop(@addr) . " " . $delivery_address;
-  }
-  
-  my $firm = pop @addr if @addr;
-
-  die "Unrecognized address format: '$addr'!" if @addr;
-
-#  $addr =~ s/\n/|/mg;          # Put it all on one line with '|' between fields
-
-  #
-  # Add field delimiters for the state and zip code:
-  #
-
-#  $addr =~ s/ ([A-Z]{2}) (\d{5}(-\d{4})?).*$/|$1|$2/i;
-
-  #
-  # Split it into an array and set fields based on it:
-  #
-  # We do explicit assignment in case there were any extra elements
-  # produced by split.
-  #
-  # TODO: This is not robust enough to deal with urbanizations, I would guess.
-  #
-
-#  my ($delivery_address, $city, $state, $zip_code) = split('\|', $addr);
-
-  $self->firm            ($firm)             if defined $firm;
-  $self->delivery_address($delivery_address);
-  $self->city            ($city);
-  $self->state           ($state);
-  $self->zip_code        ($zip_code);
-
-  return;
 }
 
 
