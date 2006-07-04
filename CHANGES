@@ -1,9 +1,24 @@
 CHANGES
 
 
-2.5 [2006-03-26]
+2.5 [2006-07-04]
 
   * Remove outdated test.html file.
+
+  * Removed dead code
+
+  * Added a test case for multiple returned addresses
+
+  * More detailed "Mailing Industry Information" parsing
+
+  * More adaptations to the USPS Zip Lookup web site.
+
+  Thanks to the following people for bug reports and code suggestions (whether
+  I used them or not): Olaf Alders <olaf@wundersolutions.com>,
+  Adam Anderson <adam@makeascene.com>, jbwaters@gmail.com,
+  James 'J.C.' Jones <jcjones@ufl.edu>, Jonathan Kamens <jik@kamens.brookline.ma.us>,
+  Jann Linder <jannlinder@gmail.com>, David Simmons <simmons@davidsimmons.com>
+  and Robert Steele <steele@andrews.edu>.
 
 
 2.4 [2005-09-20]
