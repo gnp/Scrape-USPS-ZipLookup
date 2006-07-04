@@ -518,6 +518,17 @@ these terms, but sole responsibility for conforming to the terms of use
 belongs to the user of this code, not the author.
 
 
+=head1 BUG REPORTS
+
+When contacting the author with bug reports, please provide a test address that
+exhibits the problem, and make sure it is OK to add that address to the test
+suite.
+
+Be sure to let me know if you don't want me to mention your name or email
+address when I document the changes and contributions to the release. Typically
+I put this information in the CHANGES file.
+
+
 =head1 AUTHOR
 
 Gregor N. Purdy, C<gregor@focusresearch.com>.
