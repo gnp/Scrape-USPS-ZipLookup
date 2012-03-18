@@ -1,5 +1,23 @@
 CHANGES
 
+2.6 [2012-03-17]
+
+Project is now hosted on GitHub: https://github.com/gnp/Scrape-USPS-ZipLookup
+
+  * Migrate to LWP::UserAgent from WWW::Mechanize because what we are doing really is
+    pretty simple.
+
+  * Migrate from regexp-based parsing of output to using HTML::TreeBuilder::XPath to
+    parse the HTML and XML::XPathEngine to extract 
+
+  * Add a new 'Commercial Mail Receiving Facility' attribute to Address and the parsing,
+    to match what is presently on the USPS web site.
+
+NOTE: The support for 'firm' in addresses is looking like it really doesn't work. I've
+not deleted it but am considering doing so. I tried making a unit test that exercised
+it but was not able to get the test working in a reasonable amount of time for this
+release.
+
 
 2.5 [2006-07-04]
 
