@@ -11,7 +11,7 @@
 # DOCUMENTATION OF THIS PROGRAM, WHICH MAY BE FOUND AT THE END OF THIS
 # SOURCE CODE FILE.
 #
-# Copyright (C) 1999-2006 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
 #
 # [ $Id$ ]
@@ -488,7 +488,7 @@ Gregor N. Purdy, C<gregor@focusresearch.com>.
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999-2006 Gregor N. Purdy. All rights reserved.
+Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
 
 This program is free software. It is subject to the same license as Perl.
 

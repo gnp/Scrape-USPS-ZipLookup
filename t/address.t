@@ -2,7 +2,7 @@
 #
 # address.t
 #
-# Copyright (C) 1999-2006 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
 #
 # [ $Id$ ]

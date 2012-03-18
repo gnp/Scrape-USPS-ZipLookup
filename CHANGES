@@ -13,6 +13,8 @@ Project is now hosted on GitHub: https://github.com/gnp/Scrape-USPS-ZipLookup
   * Add a new 'Commercial Mail Receiving Facility' attribute to Address and the parsing,
     to match what is presently on the USPS web site.
 
+  * Copyright date updates
+
 NOTE: The support for 'firm' in addresses is looking like it really doesn't work. I've
 not deleted it but am considering doing so. I tried making a unit test that exercised
 it but was not able to get the test working in a reasonable amount of time for this
