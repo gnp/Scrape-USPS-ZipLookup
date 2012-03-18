@@ -43,6 +43,7 @@ my @output_fields = (
   'County',
   'Delivery Point',
   'Check Digit',
+  'Commercial Mail Receiving Agency',
   'LAC Indicator',
   'eLOT Sequence',
   'eLOT Indicator',
@@ -153,6 +154,8 @@ sub carrier_route    { my $self = shift; $self->_field('Carrier Route',    @_); 
 sub county           { my $self = shift; $self->_field('County',           @_); }
 sub delivery_point   { my $self = shift; $self->_field('Delivery Point',   @_); }
 sub check_digit      { my $self = shift; $self->_field('Check Digit',      @_); }
+
+sub commercial_mail_receiving_agency  { my $self = shift; $self->_field('Commercial Mail Receiving Agency', @_); }
 
 sub lac_indicator    { my $self = shift; $self->_field('LAC Indicator',    @_); }
 sub elot_sequence    { my $self = shift; $self->_field('eLOT Sequence',    @_); }
@@ -367,6 +370,8 @@ L<http://zip4.usps.com/zip4/pu_mailing_industry_def.htm>):
 =item * delivery_point
 
 =item * check_digit
+
+=item * commercial_mail_receiving_agency
 
 =item * lac_indicator
 

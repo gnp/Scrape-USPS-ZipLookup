@@ -1,11 +1,15 @@
 # http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Scrape-USPS-ZipLookup
-version:      2.5
+version:      2.6
 version_from: lib/Scrape/USPS/ZipLookup.pm
 installdirs:  site
 requires:
-    WWW::Mechanize:                1.14
+    LWP::UserAgent                 6.04
+    LWP::Protocol::https           6.03
+    HTTP::Request::Common          6.03
+    HTML::TreeBuilder::XPath       0.14
+    XML::XPathEngine               0.13
 
 distribution_type: module
 generated_by: ExtUtils::MakeMaker version 6.17

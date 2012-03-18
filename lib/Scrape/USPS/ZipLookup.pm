@@ -21,15 +21,18 @@ package Scrape::USPS::ZipLookup;
 
 use strict;
 use warnings;
+use encoding 'utf-8';
 
-our $VERSION = '2.5';
+our $VERSION = '2.6';
 
-use WWW::Mechanize;         # To communicate with USPS and get HTML
+use LWP::UserAgent; # To communicate with USPS and get HTML
+use HTTP::Request::Common;
+use HTML::TreeBuilder::XPath; # To parse HTML
+use XML::XPathEngine; # To extract data
 
 use Scrape::USPS::ZipLookup::Address;
 
-my $start_url = 'http://zip4.usps.com/zip4/welcome.jsp';
-my $form_name = 'form1';
+my $start_url = 'https://tools.usps.com/go/ZipLookupAction!input.action?mode=0';
 
 
 #
@@ -40,23 +43,10 @@ sub new
 {
   my $class = shift;
   my $self = bless {
-    USER_AGENT => WWW::Mechanize->new(agent => ''),
     VERBOSE    => 0,
   }, $class;
 
   return $self;
-}
-
-
-#
-# user_agent()
-#
-
-sub user_agent
-{
-  my $self = shift;
-
-  return $self->{USER_AGENT};
 }
 
 
@@ -76,6 +66,26 @@ sub verbose
   }
 }
 
+
+#
+# dump()
+#
+
+sub dump
+{
+  my $self = shift;
+  my ($response) = @_;
+
+  my $request = $response->request;
+  
+  print "-" x 79, "\n";
+  print "HTTP Request:\n";
+  $request->dump;
+  
+  print "-" x 79, "\n";
+  print "HTTP Response:\n";
+  $response->dump;
+}
 
 #
 # std_inner()
@@ -101,6 +111,8 @@ sub std_inner
     print "\n";
   }
 
+  my $response = undef;
+  
   #
   # Submit the form to the USPS web server:
   #
@@ -112,209 +124,149 @@ sub std_inner
   # regular zip code lookup.
   #
 
-  my $agent = $self->user_agent;
-  $agent->quiet(not $self->verbose);
-
-  my $response = $agent->get($start_url);
-
-  die "Error communicating with server" unless $response;
-
-  my $content = $agent->{content};
-
-#  if ($self->verbose) {
-#    print "-" x 79, "\n";
-#    print "Initial Page HTTP Response:\n";
-#    print $response->as_string;
-#  }
-
-  $agent->form_name($form_name);
-
-  $agent->field(address1   => uc $addr->delivery_address);
-
-  $agent->field(city       => uc $addr->city);
-  $agent->field(state      => uc $addr->state);
-  $agent->field(zip5	   => uc $addr->zip_code);
-
-  {
-    #
-    # Stupid hack because HTML::Form does a Carp::carp when we set these read-only
-    # fields! (And, setting $agent->quiet(0) doesn't help, nor does using onwarn =>
-    # undef in the constructor for the user agent object!
-    #
-
-    no strict;
-    no warnings;
-    open SAVE_STDERR, ">&STDERR";
-    close STDERR;
-    $agent->field(visited    => 1);
-    $agent->field(pagenumber => 'all');
-    $agent->field(firmname   => '');
-    open STDERR, ">&SAVE_STDERR";
+  my $ua = LWP::UserAgent->new(cookie_jar => { }); # We need a cookie jar for USPS to let is through
+  $response = $ua->get($start_url);
+    
+  if ($self->verbose) {
+    $self->dump($response);
   }
 
-  $response = $agent->click('submit'); # An HTTP::Response instance
+  my $query_url = 'https://tools.usps.com/go/ZipLookupResultsAction!input.action';
+  my $temp = POST $query_url, [
+    resultMode  => '0',
+    companyName => '',
+    address1    => $addr->delivery_address // '',
+    address2    => '',
+    city        => $addr->city // '',
+    state       => $addr->state // '',
+    urbanCode   => '',
+    postalCode  => $addr->zip_code // '',
+    zip         => ''
+  ];
+    
+  $response = $ua->request($temp);
+  
+  if ($self->verbose) {
+    $self->dump($response);
+  }
 
-#
-# NOTE 2003-12-12: Can't do anymore. req() method is gone in 0.7 WWW::Mechanize!
-#  if ($self->verbose) {
-#    print "-" x 79, "\n";
-#    print "HTTP Request:\n";
-#    print $agent->req->as_string;
-#  }
-#
-
-  die "Error communicating with server" unless $response;
-
-  $content = $agent->{content};
-
-#  if ($self->verbose) {
-#    print "-" x 79, "\n";
-#    print "HTTP Response:\n";
-#    print $response->as_string;
-#  }
+  my $content = $response->decoded_content;
 
   #
   # Time to Parse:
   #
-  # The results look like this:
-  #
-  #   <td width="312" background="images/light_blue_bg2.gif" class="mainText">6216 EDDINGTON ST <br>LIBERTY TOWNSHIP&nbsp;OH&nbsp;45044-9761 <br>
-  #
-  # 1. We find <td header ...> ... </td> to find the data fields.
-  # 2. We strip out <font> and <a>
-  # 3. We replace &nbsp; with space
-  # 4. We strip out leading "...: "
-  # 5. We find <!--< ... />--> to get the field id
-  # 6. We standardize the field id (upper case, alpha only)
-  # 7. We standardize the value (trimming and whitespace coalescing)
-  #
-  # We end up with something like this:
-  #
-  #   ADDRESSLINE:  6216 EDDINGTON ST
-  #   CITYSTATEZIP: LIBERTY TOWNSHIP OH  45044-9761
-  #   CARRIERROUTE: R007
-  #   COUNTY: BUTLER
-  #   DELIVERYPOINT: 16
-  #   CHECKDIGIT: 3
-  #
 
   my @matches;
 
-  $content =~ s/(\cI|\cJ|\cM)//g;
-  my @raw_matches = map { trim($_) } $content =~ m{<td headers="\w+" height="34" valign="top" class="main" style="background:url\(images/table_gray\.gif\); padding:5px 10px;">(.*?)>Mailing Industry Information</a>}gsi;
+  my $tree = HTML::TreeBuilder::XPath->new();
+  $tree->parse($content);
+  my @html_matches = $tree->findnodes('//div[@class="data"]');
 
-  foreach my $raw_match (@raw_matches) {
-    if ($self->verbose) {
-      print "-" x 79, "\n";
-      print "Raw match:\n";
-      print "$raw_match\n";
-    }
+  my $xp = XML::XPathEngine->new();
 
-    my $carrier_route   = undef;
-    my $county          = undef;
-    my $delivery_point  = undef;
-    my $check_digit     = undef;
-    my $lac_indicator   = undef;
-    my $elot_sequence   = undef;
-    my $elot_indicator  = undef;
-    my $record_type     = undef;
-    my $pmb_designator  = undef;
-    my $pmb_number      = undef;
-    my $default_address = undef;
-    my $early_warning   = undef;
-    my $valid           = undef;
-
-    if ($raw_match =~ m/mailingIndustryPopup2?[(](.*?)[)];/im) {
-      my $args = $1;
-
-      # Reformat to pipe-delimited
-      $args =~ s/^'//;
-      $args =~ s/\s*'?\s*,\s*'?\s*/\|/g;
-      $args =~ s/'$//;
-
-      my @args = split(/\|/, $args);
-
-      $carrier_route   = (defined $args[0]  && $args[0]  ne '') ? $args[0]  : undef;
-      $county          = (defined $args[1]  && $args[1]  ne '') ? $args[1]  : undef;
-      $delivery_point  = (defined $args[2]  && $args[2]  ne '') ? $args[2]  : undef;
-      $check_digit     = (defined $args[3]  && $args[3]  ne '') ? $args[3]  : undef;
-      $lac_indicator   = (defined $args[4]  && $args[4]  ne '') ? $args[4]  : undef;
-      $elot_sequence   = (defined $args[5]  && $args[5]  ne '') ? $args[5]  : undef;
-      $elot_indicator  = (defined $args[6]  && $args[6]  ne '') ? $args[6]  : undef;
-      $record_type     = (defined $args[7]  && $args[7]  ne '') ? $args[7]  : undef;
-      $pmb_designator  = (defined $args[8]  && $args[8]  ne '') ? $args[8]  : undef;
-      $pmb_number      = (defined $args[9]  && $args[9]  ne '') ? $args[9]  : undef;
-      $default_address = (defined $args[10] && $args[10] ne '') ? $args[10] : undef;
-      $early_warning   = (defined $args[11] && $args[11] ne '') ? $args[11] : undef;
-      $valid           = (defined $args[12] && $args[12] ne '') ? $args[12] : undef;
-    }
-    else {
-      if ($self->verbose) {
-        print "WARNING: Could not find Mailing Industry info!\n";
-      }
-    }
-
-    $raw_match =~ s{</td>\s*<td.*?>}{ }g;
-    $raw_match =~ s{</?font.*?>}{}g;
-    $raw_match =~ s{</?span.*?>}{}g;
-    $raw_match =~ s{</?a.*?>}{}g;
-    $raw_match =~ s{&nbsp;}{ }g;
-    $raw_match =~ s{^.*?:\s*}{}g;
-    $raw_match =~ s{\s+}{ }g;
-    $raw_match =~ s{<!--<(.*?)/>-->}{}g;
-    $raw_match =~ s{<a.*$}{};
-    $raw_match =~ s{<br\s*/?>\s*$}{};
-
-    if ($self->verbose) {
-      print "-" x 79, "\n";
-      print "Distilled match:\n";
-      print "$raw_match\n";
-    }
-
-    my @parts = split( /\s*<br\s*\/?>\s*/, $raw_match);
+  for my $node (@html_matches) {
+#    $node->dump();
 
     my $firm = undef;
     my $address = undef;
-    my $city_state_zip = undef;
+    my $city = undef;
+    my $state = undef;
+    my $zip4 = undef;
+    my $zip = undef;
 
-    if (@parts == 2) {
-      ($address, $city_state_zip) = @parts;
-    }
-    elsif (@parts == 3) {
-      ($firm, $address, $city_state_zip) = @parts;
-    }
-    else {
-      die "Parts = " . scalar(@parts) . "!";
+    my $found;
+
+    $found = $xp->find('p[@class="std-address"]/span[@class="address1 range"]', $node);
+    for my $x ($found->get_nodelist) {
+      $address = $x->as_trimmed_text();
+
+#      my $firm_node = $xp->find('preceding-sibling::text()', $x);
+#      for my $y ($firm_node->get_nodelist) {
+#        $firm .= $y->as_trimmed_text();
+#      }
+
+      last;
     }
 
-    next unless $city_state_zip;
-    next unless ($city_state_zip =~ m/^(.*)\s+(\w\w)\s+(\d{5}(-\d{4})?)/);
+    $found = $xp->find('p[@class="std-address"]/span[@class="city range"]', $node);
+    for my $x ($found->get_nodelist) {
+      $city = $x->as_trimmed_text();
+      last;
+    }
 
-    my ($city, $state, $zip) = ($1, $2, $3);
+    $found = $xp->find('p[@class="std-address"]/span[@class="state range"]', $node);
+    for my $x ($found->get_nodelist) {
+      $state = $x->as_trimmed_text();
+      last;
+    }
+
+    $found = $xp->find('p[@class="std-address"]/span[@class="zip4"]', $node);
+    for my $x ($found->get_nodelist) {
+      $zip4 = $x->as_trimmed_text();
+      last;
+    }
+
+    $found = $xp->find('p[@class="std-address"]/span[@class="zip"]', $node);
+    for my $x ($found->get_nodelist) {
+      $zip = $x->as_trimmed_text() . (defined($zip4) ? ('-' . $zip4) : '');
+      last;
+    }
+
+    my %details;
+
+    my $dts = $xp->find('div/dl[@class="details"]/dt', $node);
+    for my $dt ($dts->get_nodelist) {
+      my $key = $dt->as_trimmed_text();
+
+      my $dds = $xp->find('following-sibling::dd[1]', $dt);
+
+      for my $dd ($dds->get_nodelist) {
+        my $value = $dd->as_trimmed_text();
+        $details{$key} = $value;
+      }
+    }
+
+    my $carrier_route = $details{'Carrier Route'};
+    my $county = $details{'County'};
+    my $delivery_point = $details{'Delivery Point Code'};
+    my $check_digit = $details{'Check Digit'};
+
+    my $commercial_mail_receiving_agency = $details{'Commercial Mail Receiving Agency'};
+
+    my $lac_indicator = $details{"LAC\x{2122}"};
+    my $elot_sequence = $details{"eLOT\x{2122}"};
+    my $elot_indicator = $details{'eLOT Ascending/Descending Indicator'};
+    my $record_type = $details{'Record Type Code'};
+    my $pmb_designator = $details{'PMB Designator'};
+    my $pmb_number = $details{'PMB Number'};
+    my $default_address = $details{'Default Flag'};
+    my $early_warning = $details{'EWS Flag'};
+    my $valid = $details{'DPV Confirmation Indicator'};
 
     if ($self->verbose) {
       print("-" x 70, "\n");
 
-      print "Firm:            $firm\n"            if defined $firm;;
+      print "Firm:                              $firm\n"                             if defined $firm;
 
-      print "Address:         $address\n";
-      print "City:            $city\n";
-      print "State:           $state\n";
-      print "Zip:             $zip\n";
+      print "Address:                           $address\n";
+      print "City:                              $city\n";
+      print "State:                             $state\n";
+      print "Zip:                               $zip\n";
 
-      print "Carrier Route:   $carrier_route\n"   if defined $carrier_route;
-      print "County:          $county\n"          if defined $county;
-      print "Delivery Point:  $delivery_point\n"  if defined $delivery_point;
-      print "Check Digit:     $check_digit\n"     if defined $check_digit;
-      print "LAC Indicator:   $lac_indicator\n"   if defined $lac_indicator;
-      print "eLOT Sequence:   $elot_sequence\n"   if defined $elot_sequence;
-      print "eLOT Indicator:  $elot_indicator\n"  if defined $elot_indicator;
-      print "Record Type:     $record_type\n"     if defined $record_type;
-      print "PMB Designator:  $pmb_designator\n"  if defined $pmb_designator;
-      print "PMB Number:      $pmb_number\n"      if defined $pmb_number;
-      print "Default Address: $default_address\n" if defined $default_address;
-      print "Early Warning:   $early_warning\n"   if defined $early_warning;
-      print "Valid:           $valid\n"           if defined $valid;
+      print "Carrier Route:                     $carrier_route\n"                    if defined $carrier_route;
+      print "County:                            $county\n"                           if defined $county;
+      print "Delivery Point:                    $delivery_point\n"                   if defined $delivery_point;
+      print "Check Digit:                       $check_digit\n"                      if defined $check_digit;
+      print "Commercial Mail Receiving Agency:  $commercial_mail_receiving_agency\n" if defined $commercial_mail_receiving_agency;
+      print "LAC Indicator:                     $lac_indicator\n"                    if defined $lac_indicator;
+      print "eLOT Sequence:                     $elot_sequence\n"                    if defined $elot_sequence;
+      print "eLOT Indicator:                    $elot_indicator\n"                   if defined $elot_indicator;
+      print "Record Type:                       $record_type\n"                      if defined $record_type;
+      print "PMB Designator:                    $pmb_designator\n"                   if defined $pmb_designator;
+      print "PMB Number:                        $pmb_number\n"                       if defined $pmb_number;
+      print "Default Address:                   $default_address\n"                  if defined $default_address;
+      print "Early Warning:                     $early_warning\n"                    if defined $early_warning;
+      print "Valid:                             $valid\n"                            if defined $valid;
 
       print "\n";
     }
@@ -327,7 +279,7 @@ sub std_inner
     $match->county($county);
     $match->delivery_point($delivery_point);
     $match->check_digit($check_digit);
-
+    $match->commercial_mail_receiving_agency($commercial_mail_receiving_agency);
     $match->lac_indicator($lac_indicator);
     $match->elot_sequence($elot_sequence);
     $match->elot_indicator($elot_indicator);

@@ -13,7 +13,11 @@ WriteMakefile (
   NAME         => 'Scrape::USPS::ZipLookup',
   VERSION_FROM => 'lib/Scrape/USPS/ZipLookup.pm',
   PREREQ_PM    => {
-    WWW::Mechanize         => 1.14, # To communicate with USPS and get HTML
+    LWP::UserAgent           => 6.04,
+    LWP::Protocol::https     => 6.03,   # To use HTTPS during unit tests
+    HTTP::Request::Common    => 6.03,
+    HTML::TreeBuilder::XPath => 0.14,   # To scrape data out of HTML
+    XML::XPathEngine         => 0.13,
   },
   EXE_FILES    => [
     'script/stdaddr'
