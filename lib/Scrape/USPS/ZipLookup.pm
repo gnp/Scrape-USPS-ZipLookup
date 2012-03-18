@@ -11,7 +11,7 @@
 # DOCUMENTATION OF THIS PROGRAM, WHICH MAY BE FOUND AT THE END OF THIS
 # SOURCE CODE FILE.
 #
-# Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2012 Gregor N. Purdy, Sr. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
 #
 # [ $Id$ ]
@@ -483,12 +483,12 @@ I put this information in the CHANGES file.
 
 =head1 AUTHOR
 
-Gregor N. Purdy, C<gregor@focusresearch.com>.
+Gregor N. Purdy, Sr. C<gnp@acm.org>.
 
 
 =head1 COPYRIGHT
 
-Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
+Copyright (C) 1999-2012 Gregor N. Purdy, Sr. All rights reserved.
 
 This program is free software. It is subject to the same license as Perl.
 

@@ -108,10 +108,10 @@ BUG REPORTS
     release. Typically I put this information in the CHANGES file.
 
 AUTHOR
-    Gregor N. Purdy, "gregor@focusresearch.com".
+    Gregor N. Purdy, Sr. "gnp@acm.org".
 
 COPYRIGHT
-    Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
+    Copyright (C) 1999-2012 Gregor N. Purdy, Sr. All rights reserved.
 
     This program is free software. It is subject to the same license as
     Perl.

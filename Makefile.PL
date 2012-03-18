@@ -1,7 +1,7 @@
 #
 # Makefile.PL
 #
-# Copyright (C) 1999-2012 Gregor N. Purdy. All rights reserved.
+# Copyright (C) 1999-2012 Gregor N. Purdy, Sr. All rights reserved.
 # This program is free software. It is subject to the same license as Perl.
 #
 # [ $Id$ ]
@@ -22,7 +22,7 @@ WriteMakefile (
   EXE_FILES    => [
     'script/stdaddr'
   ],
-  AUTHOR       => 'Gregor N. Purdy (gregor@focusresearch.com)',
+  AUTHOR       => 'Gregor N. Purdy, Sr. (gnp@acm.org)',
   ABSTRACT     => 'Programmatic interaction with the USPS Zip Code Lookup web application',
   dist         => { COMPRESS => 'gzip -9f', SUFFIX => 'gz' }
 );
