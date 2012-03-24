@@ -1,4 +1,5 @@
 MYMETA.yml
 Makefile
+Scrape-USPS-ZipLookup-*.tar.gz
 blib/
 pm_to_blib
