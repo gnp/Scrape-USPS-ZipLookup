@@ -2,7 +2,7 @@ CHANGES
 COPYRIGHT
 Makefile.PL
 MANIFEST
-README
+README.md
 lib/Scrape/USPS/ZipLookup.pm
 lib/Scrape/USPS/ZipLookup/Address.pm
 script/stdaddr
