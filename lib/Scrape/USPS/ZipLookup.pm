@@ -140,8 +140,8 @@ sub std_inner
     city        => $addr->city // '',
     state       => $addr->state // '',
     urbanCode   => '',
-    postalCode  => $addr->zip_code // '',
-    zip         => ''
+    postalCode  => '',
+    zip         => $addr->zip_code // ''
   ];
     
   $response = $ua->request($temp);
