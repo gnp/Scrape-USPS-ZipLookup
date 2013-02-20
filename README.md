@@ -115,6 +115,10 @@ The author believes that the example usage given above does not violate
 these terms, but sole responsibility for conforming to the terms of use
 belongs to the user of this code, not the author.
 
+If you want to do bulk lookups or lookups for commercial purposes, see the USPS
+API site:
+
+> https://www.usps.com/business/webtools.htm
 
 
 # BUG REPORTS
