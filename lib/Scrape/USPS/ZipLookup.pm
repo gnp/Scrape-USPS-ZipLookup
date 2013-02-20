@@ -123,8 +123,13 @@ sub std_inner
   # We set the form's Selection field to "1" to indicate that we are doing
   # regular zip code lookup.
   #
+  # We need a cookie jar for USPS to let us through.
+  #
+  # We need a "Mozilla/5.0" agent as of 2013-02-20 also.
+  #
 
-  my $ua = LWP::UserAgent->new(cookie_jar => { }); # We need a cookie jar for USPS to let is through
+  my $ua = LWP::UserAgent->new(cookie_jar => { }, agent => "Mozilla/5.0");
+
   $response = $ua->get($start_url);
     
   if ($self->verbose) {
